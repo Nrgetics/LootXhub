@@ -1,0 +1,13 @@
+{
+  "name": "lootxhub-marketplace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Full-stack LootXHub marketplace prototype with accounts, listings, uploads, moderation, and checkout.",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js && node -e \"const fs=require('fs');const h=fs.readFileSync('index.html','utf8');const s=[...h.matchAll(/<script>([\\\\s\\\\S]*?)<\\\\/script>/g)].map(m=>m[1]).join('\\\\n');new Function(s);console.log('inline script ok')\""
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

@@ -1,294 +1,3709 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>LootXHub</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LootXHub Marketplace</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #f6f7fb;
+        --muted: #a8adba;
+        --paper: #080a10;
+        --panel: #171922;
+        --soft: #202431;
+        --line: rgba(255, 255, 255, 0.1);
+        --dark: #0d0f16;
+        --green: #15a67a;
+        --green-dark: #087358;
+        --gold: #ffd05a;
+        --orange: #ef7b45;
+        --blue: #3187ff;
+        --cyan: #21bad5;
+        --pink: #e65783;
+        --violet: #7b61ff;
+        --danger: #c94648;
+        --shadow: 0 18px 52px rgba(21, 30, 45, 0.12);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
 
-<style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Inter,Arial,sans-serif}
-body{background:#070a12;color:white}
-a{text-decoration:none;color:inherit}
-html{scroll-behavior:smooth}
+      * {
+        box-sizing: border-box;
+      }
 
-.header{
-  position:sticky;top:0;z-index:50;
-  display:flex;justify-content:space-between;align-items:center;
-  padding:18px 8%;
-  background:rgba(7,10,18,.78);
-  backdrop-filter:blur(18px);
-  border-bottom:1px solid rgba(255,255,255,.08)
-}
-.logo{display:flex;align-items:center;gap:12px;font-size:28px;font-weight:900}
-.logo-box{
-  width:42px;height:42px;border-radius:14px;
-  display:grid;place-items:center;
-  background:linear-gradient(135deg,#38a8ff,#7d5cff);
-  box-shadow:0 0 30px rgba(56,168,255,.35)
-}
-.logo span{color:#38a8ff}
-.nav{display:flex;gap:26px;color:#bfcae0;font-weight:700}
-.nav a:hover{color:#38a8ff}
-.header-btn{
-  padding:12px 18px;border-radius:14px;font-weight:900;
-  background:linear-gradient(135deg,#38a8ff,#7d5cff);
-  box-shadow:0 12px 30px rgba(56,168,255,.25)
-}
+      html {
+        min-width: 320px;
+        scroll-behavior: smooth;
+        background: var(--paper);
+      }
 
-.hero{
-  min-height:88vh;
-  display:grid;grid-template-columns:1.1fr .9fr;gap:50px;
-  align-items:center;padding:85px 8%;
-  background:
-  radial-gradient(circle at 10% 10%,rgba(56,168,255,.28),transparent 30%),
-  radial-gradient(circle at 90% 20%,rgba(125,92,255,.22),transparent 32%);
-}
-.badge{
-  display:inline-block;padding:9px 15px;border-radius:999px;
-  background:rgba(56,168,255,.12);
-  border:1px solid rgba(56,168,255,.3);
-  color:#7ecbff;font-weight:900;margin-bottom:22px
-}
-.hero h1{
-  font-size:clamp(48px,7vw,86px);
-  line-height:.92;letter-spacing:-3px;margin-bottom:24px
-}
-.hero h1 span{
-  background:linear-gradient(135deg,#38a8ff,#a98cff);
-  -webkit-background-clip:text;color:transparent
-}
-.hero p{font-size:18px;line-height:1.7;color:#b9c5dc;max-width:620px;margin-bottom:32px}
-.buttons{display:flex;gap:14px;flex-wrap:wrap}
-.btn{
-  padding:15px 22px;border-radius:15px;font-weight:900;
-  transition:.25s;display:inline-block
-}
-.btn:hover,.card:hover,.product:hover{transform:translateY(-5px)}
-.primary{background:linear-gradient(135deg,#38a8ff,#7d5cff);box-shadow:0 14px 35px rgba(56,168,255,.28)}
-.secondary{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
+      body {
+        min-height: 100vh;
+        margin: 0;
+        color: var(--ink);
+        background: #090b12;
+      }
 
-.preview{
-  background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.04));
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:30px;padding:24px;
-  box-shadow:0 35px 90px rgba(0,0,0,.45)
-}
-.preview-top{display:flex;justify-content:space-between;margin-bottom:20px;color:#8fa1bd}
-.search{
-  background:#101827;border-radius:16px;padding:14px;color:#8fa1bd;
-  border:1px solid rgba(255,255,255,.08)
-}
-.item{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:16px;margin-top:13px;border-radius:18px;
-  background:rgba(255,255,255,.07)
-}
-.item-left{display:flex;align-items:center;gap:13px}
-.emoji{
-  width:48px;height:48px;border-radius:16px;display:grid;place-items:center;
-  background:linear-gradient(135deg,rgba(56,168,255,.35),rgba(125,92,255,.35));
-  font-size:25px
-}
-.price{color:#70ffac;font-weight:900}
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
 
-section{padding:75px 8%}
-.title{text-align:center;font-size:40px;margin-bottom:12px;letter-spacing:-1px}
-.sub{text-align:center;color:#aebbd2;max-width:680px;margin:0 auto 40px;line-height:1.6}
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
-.card,.product{
-  background:rgba(255,255,255,.055);
-  border:1px solid rgba(255,255,255,.1);
-  border-radius:24px;padding:25px;transition:.25s
-}
-.icon{
-  width:54px;height:54px;border-radius:18px;display:grid;place-items:center;
-  background:rgba(56,168,255,.13);font-size:27px;margin-bottom:16px
-}
-.card h3,.product h3{font-size:22px;margin-bottom:9px}
-.card p,.product p{color:#aebbd2;line-height:1.6}
-.product-img{
-  height:155px;border-radius:20px;display:grid;place-items:center;
-  font-size:60px;margin-bottom:18px;
-  background:linear-gradient(135deg,rgba(56,168,255,.23),rgba(125,92,255,.23))
-}
-.product-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:18px}
-.add{
-  border:0;padding:11px 15px;border-radius:13px;color:white;
-  background:#38a8ff;font-weight:900;cursor:pointer
-}
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
 
-.contact-box{
-  max-width:880px;margin:auto;text-align:center;padding:45px;border-radius:30px;
-  background:linear-gradient(135deg,rgba(56,168,255,.16),rgba(125,92,255,.16));
-  border:1px solid rgba(255,255,255,.12)
-}
-.email{
-  display:inline-block;margin-top:18px;padding:15px 22px;border-radius:15px;
-  background:white;color:#070a12;font-weight:900
-}
-footer{
-  padding:28px 8%;border-top:1px solid rgba(255,255,255,.08);
-  color:#8996ad;display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px
-}
+      button {
+        cursor: pointer;
+      }
 
-@media(max-width:900px){
-  .header{flex-direction:column;gap:15px}
-  .nav{flex-wrap:wrap;justify-content:center}
-  .hero{grid-template-columns:1fr;text-align:center}
-  .hero p{margin-left:auto;margin-right:auto}
-  .buttons{justify-content:center}
-  .grid{grid-template-columns:1fr}
-}
-</style>
-</head>
+      img {
+        display: block;
+        max-width: 100%;
+      }
 
-<body>
+      .site-header,
+      .brand,
+      .header-actions,
+      .search-bar,
+      .top-nav,
+      .hero-actions,
+      .category-card,
+      .market-shell,
+      .filter-title,
+      .results-head,
+      .results-tools,
+      .seller-line,
+      .listing-meta,
+      .card-actions,
+      .order-line,
+      .trust-row,
+      .metric-row,
+      .studio-grid,
+      .auth-tabs,
+      .admin-actions,
+      .status-line {
+        display: flex;
+        align-items: center;
+      }
 
-<header class="header">
-  <a class="logo" href="#">
-    <div class="logo-box">L</div>
-    Loot<span>X</span>Hub
-  </a>
+      .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        display: grid;
+        grid-template-columns: auto minmax(360px, 1fr) auto;
+        gap: 18px;
+        padding: 14px 24px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(13, 14, 20, 0.96);
+        backdrop-filter: blur(18px);
+      }
 
-  <nav class="nav">
-    <a href="#features">Features</a>
-    <a href="#products">Shop</a>
-    <a href="#contact">Contact</a>
-  </nav>
+      .brand {
+        gap: 12px;
+        min-width: 194px;
+      }
 
-  <a href="#products" class="header-btn">Browse Loot</a>
-</header>
+      .brand-mark {
+        display: grid;
+        width: 44px;
+        height: 44px;
+        place-items: center;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #ffd45f, #f0a81f);
+        color: #111318;
+        font-weight: 950;
+        box-shadow: 0 12px 28px rgba(255, 208, 90, 0.26);
+      }
 
-<main class="hero">
-  <div>
-    <div class="badge">Roblox Digital Marketplace</div>
-    <h1>Buy Roblox loot <span>faster.</span></h1>
-    <p>
-      A clean, modern marketplace for Roblox pets, items, boosts, coins, and digital goods.
-      Built to look trusted, smooth, and simple for buyers.
-    </p>
-    <div class="buttons">
-      <a href="#products" class="btn primary">Shop Now</a>
-      <a href="#contact" class="btn secondary">Contact Us</a>
-    </div>
-  </div>
+      .brand strong,
+      .brand small {
+        display: block;
+      }
 
-  <div class="preview">
-    <div class="preview-top">
-      <strong>Featured Loot</strong>
-      <span>Live</span>
-    </div>
-    <div class="search">Search pets, items, coins...</div>
+      .brand small,
+      .muted,
+      .help-text,
+      .metric-card small,
+      .listing-card p,
+      .order-panel p,
+      .auth-panel p {
+        color: var(--muted);
+      }
 
-    <div class="item">
-      <div class="item-left">
-        <div class="emoji">🐾</div>
-        <div>
-          <strong>Rare Pet</strong><br>
-          <small>Fast Delivery</small>
+      .brand small {
+        margin-top: 1px;
+        font-size: 0.78rem;
+        font-weight: 750;
+      }
+
+      .search-bar {
+        min-height: 58px;
+        gap: 10px;
+        padding: 0 12px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 12px;
+        background: #24252f;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02), 0 10px 28px rgba(0, 0, 0, 0.22);
+      }
+
+      .search-bar span {
+        color: var(--blue);
+        font-weight: 950;
+      }
+
+      .search-scope {
+        min-height: 38px;
+        padding: 0 10px;
+        border: 0;
+        border-right: 1px solid rgba(255, 255, 255, 0.12);
+        outline: 0;
+        background: transparent;
+        color: #f5f7fb;
+        font-weight: 850;
+      }
+
+      .search-bar input {
+        width: 100%;
+        min-width: 0;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: #ffffff;
+      }
+
+      .search-bar input::placeholder {
+        color: #b9bdc9;
+      }
+
+      .search-submit {
+        min-width: 86px;
+        min-height: 36px;
+        border-radius: 10px;
+      }
+
+      .header-actions {
+        justify-content: flex-end;
+        gap: 10px;
+      }
+
+      .nav-button,
+      .primary-button,
+      .ghost-button,
+      .chip-button,
+      .buy-button,
+      .secondary-button,
+      .danger-button {
+        min-height: 40px;
+        border-radius: 10px;
+        font-weight: 850;
+        transition:
+          transform 160ms ease,
+          background 160ms ease,
+          border-color 160ms ease,
+          color 160ms ease;
+      }
+
+      .nav-button,
+      .ghost-button,
+      .secondary-button {
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.06);
+        color: #e8ebf2;
+      }
+
+      .nav-button,
+      .primary-button,
+      .ghost-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 14px;
+      }
+
+      .primary-button,
+      .buy-button {
+        border: 1px solid #f1bb3d;
+        background: linear-gradient(135deg, #ffdc73, #f0b93e);
+        color: #111318;
+        box-shadow: 0 12px 28px rgba(255, 208, 90, 0.24);
+      }
+
+      .secondary-button,
+      .danger-button {
+        padding: 0 12px;
+      }
+
+      .danger-button {
+        border: 1px solid rgba(201, 70, 72, 0.28);
+        background: #fff0f1;
+        color: #9b282b;
+      }
+
+      .nav-button:hover,
+      .primary-button:hover,
+      .ghost-button:hover,
+      .chip-button:hover,
+      .buy-button:hover,
+      .secondary-button:hover,
+      .danger-button:hover {
+        transform: translateY(-1px);
+      }
+
+      .page {
+        display: grid;
+        gap: 0;
+        padding: 0 24px 36px;
+      }
+
+      .page-view {
+        display: grid;
+        gap: 20px;
+      }
+
+      .page-view.page-hidden {
+        display: none !important;
+      }
+
+      .page-title {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: var(--shadow);
+      }
+
+      .page-title h1 {
+        margin-bottom: 4px;
+        font-size: clamp(1.85rem, 3vw, 3.2rem);
+        line-height: 1;
+      }
+
+      .top-nav {
+        margin: 0 -24px;
+        padding: 13px 24px;
+        flex-wrap: wrap;
+        gap: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        background: #191a24;
+      }
+
+      .top-nav a,
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        padding: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        color: #f2f4fb;
+        font-size: 1.03rem;
+        font-weight: 900;
+      }
+
+      .top-nav a::after {
+        content: "⌄";
+        margin-left: 6px;
+        color: #9fa5b6;
+        font-size: 0.75rem;
+      }
+
+      .top-nav a[href="#sell"]::after,
+      .top-nav a[href="#account"]::after,
+      .top-nav a[href="#admin"]::after {
+        content: "";
+        margin-left: 0;
+      }
+
+      .pill {
+        min-height: 36px;
+        padding: 0 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        color: #f5f7fb;
+        font-size: 0.86rem;
+      }
+
+      .top-nav a.active,
+      .nav-button.active {
+        color: #ffd05a;
+        background: rgba(255, 208, 90, 0.08);
+      }
+
+      .server-warning {
+        display: none;
+        padding: 14px 16px;
+        border: 1px solid #ffd18a;
+        border-radius: 12px;
+        background: #fff7e7;
+        color: #744500;
+        font-weight: 820;
+      }
+
+      .server-warning.show {
+        display: block;
+      }
+
+      .hero {
+        overflow: hidden;
+        margin: 0 -24px;
+        border: 0;
+        border-radius: 0;
+        background:
+          radial-gradient(circle at 70% 18%, rgba(255, 255, 255, 0.36) 0 0.18rem, transparent 0.22rem),
+          radial-gradient(circle at 22% 36%, rgba(255, 255, 255, 0.36) 0 0.16rem, transparent 0.2rem),
+          linear-gradient(180deg, #3c8ed9 0 58%, #327c4a 58% 100%);
+        color: #f9fbff;
+        box-shadow: none;
+      }
+
+      .home-finder {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(260px, 0.9fr);
+        gap: 14px;
+        margin-top: -78px;
+        position: relative;
+        z-index: 4;
+      }
+
+      .finder-panel,
+      .popular-panel {
+        display: grid;
+        gap: 12px;
+        padding: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        background: #1b1d27;
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+      }
+
+      .finder-search {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 54px;
+        padding: 0 14px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        background: #242631;
+      }
+
+      .finder-search input {
+        width: 100%;
+        min-width: 0;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: #ffffff;
+      }
+
+      .finder-search input::placeholder {
+        color: #b9bdc9;
+      }
+
+      .popular-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .market-list-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 22px;
+        position: relative;
+        z-index: 3;
+        padding-top: 22px;
+      }
+
+      .market-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px 28px;
+        padding: 24px 28px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        background: #1b1d27;
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+      }
+
+      .market-list > div {
+        grid-column: 1 / -1;
+      }
+
+      .market-list a,
+      .offer-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 12px;
+        min-height: 46px;
+        padding: 0;
+        border: 1px solid transparent;
+        border-radius: 10px;
+        background: transparent;
+        color: #f7f8fd;
+        font-size: 1rem;
+        font-weight: 900;
+      }
+
+      .market-list a:hover,
+      .offer-row:hover {
+        border-color: rgba(255, 208, 90, 0.18);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .offer-row small {
+        color: var(--muted);
+        font-weight: 760;
+      }
+
+      .game-badge {
+        display: grid;
+        width: 36px;
+        height: 36px;
+        flex: 0 0 36px;
+        place-items: center;
+        border-radius: 9px;
+        background: var(--badge-bg, #ffd05a);
+        color: var(--badge-ink, #111318);
+        font-weight: 950;
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: minmax(320px, 0.84fr) minmax(420px, 1.16fr);
+        gap: 20px;
+        min-height: 520px;
+        padding: 86px 9vw 118px;
+        position: relative;
+      }
+
+      .hero-grid::before {
+        content: "";
+        position: absolute;
+        left: 35%;
+        right: 18%;
+        bottom: 0;
+        height: 42%;
+        background: linear-gradient(110deg, transparent 0 28%, #6f1428 28% 72%, transparent 72% 100%);
+        opacity: 0.86;
+        pointer-events: none;
+      }
+
+      .hero-copy {
+        display: grid;
+        align-content: center;
+        gap: 22px;
+        position: relative;
+        z-index: 2;
+      }
+
+      .eyebrow {
+        margin: 0 0 8px;
+        color: var(--gold);
+        font-size: 0.76rem;
+        font-weight: 950;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        max-width: 900px;
+        margin-bottom: 0;
+        font-size: clamp(3.2rem, 5vw, 6rem);
+        line-height: 0.98;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        margin-bottom: 0;
+        font-size: 1.16rem;
+      }
+
+      h3 {
+        margin-bottom: 7px;
+        font-size: 1.02rem;
+      }
+
+      .hero-copy p {
+        max-width: 720px;
+        margin-bottom: 0;
+        color: #f5f7fb;
+        font-size: clamp(1.1rem, 1.35vw, 1.45rem);
+        line-height: 1.58;
+        text-shadow: 0 2px 14px rgba(0, 0, 0, 0.26);
+      }
+
+      .hero-actions {
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .showcase-card {
+        position: relative;
+        align-self: end;
+        min-height: 360px;
+        overflow: visible;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+      }
+
+      .showcase-card img {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border: 5px solid #ffffff;
+        border-radius: 22px;
+        box-shadow: 0 22px 40px rgba(0, 0, 0, 0.22);
+      }
+
+      .showcase-info {
+        position: absolute;
+        right: 8%;
+        bottom: 0;
+        z-index: 4;
+        display: grid;
+        gap: 8px;
+        padding: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 14px;
+        background: rgba(15, 17, 25, 0.84);
+        box-shadow: 0 22px 46px rgba(0, 0, 0, 0.26);
+      }
+
+      .showcase-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 14px;
+        color: #bfd0df;
+        font-size: 0.88rem;
+        font-weight: 760;
+      }
+
+      .hero-stage {
+        position: absolute;
+        inset: 0 0 18px;
+      }
+
+      .hero-cloud {
+        position: absolute;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.18);
+      }
+
+      .hero-cloud.one {
+        width: 360px;
+        height: 160px;
+        right: 20%;
+        top: 10%;
+      }
+
+      .hero-cloud.two {
+        width: 260px;
+        height: 118px;
+        right: 0;
+        top: 20%;
+      }
+
+      .hero-character {
+        position: absolute;
+        bottom: 24px;
+        display: grid;
+        place-items: center;
+        width: var(--size);
+        height: calc(var(--size) * 1.18);
+        border: 5px solid #ffffff;
+        border-radius: 22px;
+        background: var(--char-bg);
+        color: #111318;
+        font-size: calc(var(--size) * 0.32);
+        font-weight: 950;
+        transform: rotate(var(--tilt, 0deg));
+        box-shadow: 0 24px 34px rgba(0, 0, 0, 0.24);
+      }
+
+      .hero-character::before,
+      .hero-character::after {
+        content: "";
+        position: absolute;
+        width: 13%;
+        height: 13%;
+        top: 30%;
+        border-radius: 50%;
+        background: #111318;
+      }
+
+      .hero-character::before {
+        left: 28%;
+      }
+
+      .hero-character::after {
+        right: 28%;
+      }
+
+      .hero-character small {
+        position: absolute;
+        bottom: 18%;
+        width: 32%;
+        height: 8%;
+        border-radius: 999px;
+        background: #111318;
+      }
+
+      .hero-character.c1 {
+        --size: 150px;
+        --char-bg: linear-gradient(180deg, #ffd05a, #ff9f3d);
+        left: 12%;
+        z-index: 2;
+      }
+
+      .hero-character.c2 {
+        --size: 190px;
+        --char-bg: linear-gradient(180deg, #8cecff, #4fa4ff);
+        left: 30%;
+        bottom: 44px;
+        z-index: 3;
+      }
+
+      .hero-character.c3 {
+        --size: 176px;
+        --char-bg: linear-gradient(180deg, #9ff0a7, #5bcb74);
+        left: 50%;
+        z-index: 2;
+      }
+
+      .hero-character.c4 {
+        --size: 210px;
+        --char-bg: linear-gradient(180deg, #ff6f6f, #e73535);
+        left: 69%;
+        bottom: 16px;
+        z-index: 4;
+      }
+
+      .category-grid {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 12px;
+        padding-top: 22px;
+      }
+
+      .category-card {
+        justify-content: space-between;
+        min-height: 104px;
+        gap: 12px;
+        padding: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        background: #1b1d27;
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.24);
+        text-align: left;
+      }
+
+      .category-card.active {
+        border-color: rgba(255, 208, 90, 0.46);
+        background: #23202a;
+      }
+
+      .category-card span,
+      .category-card strong {
+        display: block;
+      }
+
+      .category-card small {
+        color: var(--muted);
+        font-weight: 780;
+      }
+
+      .category-icon {
+        display: grid;
+        width: 44px;
+        height: 44px;
+        flex: 0 0 44px;
+        place-items: center;
+        border-radius: 12px;
+        background: var(--cat-bg);
+        color: #ffffff;
+        font-weight: 950;
+        box-shadow: 0 12px 26px rgba(21, 30, 45, 0.16);
+      }
+
+      .metric-row {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .metric-card,
+      .filter-panel,
+      .results-panel,
+      .order-panel,
+      .seller-studio,
+      .auth-panel,
+      .admin-panel {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: #171922;
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+      }
+
+      .metric-card {
+        display: grid;
+        gap: 8px;
+        min-height: 112px;
+        padding: 16px;
+      }
+
+      .metric-card strong {
+        font-size: clamp(1.45rem, 2.8vw, 2rem);
+        line-height: 1;
+      }
+
+      .positive,
+      .neutral {
+        font-size: 0.84rem;
+        font-weight: 850;
+      }
+
+      .positive {
+        color: var(--green-dark);
+      }
+
+      .neutral {
+        color: #a26113;
+      }
+
+      .market-shell {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+      }
+
+      .checkout-page {
+        justify-items: center;
+      }
+
+      .checkout-page .order-panel {
+        position: static;
+        width: min(760px, 100%);
+        flex-basis: auto;
+      }
+
+      .filter-panel,
+      .order-panel {
+        position: sticky;
+        top: 86px;
+        display: grid;
+        gap: 18px;
+        width: 282px;
+        flex: 0 0 282px;
+        padding: 16px;
+      }
+
+      .order-panel {
+        width: 360px;
+        flex-basis: 360px;
+      }
+
+      .filter-title,
+      .results-head,
+      .results-tools {
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .filter-group,
+      .auth-form,
+      .seller-studio,
+      .admin-panel,
+      .order-box,
+      .selected-box {
+        display: grid;
+        gap: 12px;
+      }
+
+      .filter-group label,
+      .form-field label {
+        color: #dfe3ec;
+        font-size: 0.86rem;
+        font-weight: 850;
+      }
+
+      .filter-group select,
+      .filter-group input[type="range"],
+      .form-field input,
+      .form-field select,
+      .form-field textarea {
+        width: 100%;
+      }
+
+      .filter-group select,
+      .form-field input,
+      .form-field select,
+      .form-field textarea {
+        min-height: 42px;
+        padding: 0 11px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #222631;
+        color: var(--ink);
+      }
+
+      .form-field textarea {
+        min-height: 94px;
+        padding: 10px 11px;
+        resize: vertical;
+      }
+
+      .chip-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .chip-button {
+        border: 1px solid var(--line);
+        background: #222631;
+        color: #e8ebf2;
+      }
+
+      .chip-button.active {
+        border-color: rgba(255, 208, 90, 0.38);
+        background: rgba(255, 208, 90, 0.12);
+        color: #ffd05a;
+      }
+
+      .range-value {
+        display: flex;
+        justify-content: space-between;
+        color: var(--muted);
+        font-size: 0.82rem;
+        font-weight: 760;
+      }
+
+      .results-panel {
+        min-width: 0;
+        flex: 1 1 auto;
+        overflow: hidden;
+      }
+
+      .results-head {
+        padding: 18px 18px 12px;
+      }
+
+      .results-tools {
+        flex-wrap: wrap;
+        padding: 0 18px 14px;
+      }
+
+      .game-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .pill.active {
+        border-color: rgba(255, 208, 90, 0.34);
+        background: rgba(255, 208, 90, 0.14);
+        color: #ffd05a;
+      }
+
+      .sort-select {
+        min-height: 38px;
+        padding: 0 10px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #222631;
+        color: var(--ink);
+        font-weight: 780;
+      }
+
+      .listing-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(220px, 1fr));
+        gap: 14px;
+        padding: 0 18px 18px;
+      }
+
+      .listing-card {
+        display: grid;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: #1b1d27;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+      }
+
+      .listing-image,
+      .selected-image {
+        position: relative;
+        overflow: hidden;
+        background: #dde8f5;
+      }
+
+      .listing-image {
+        aspect-ratio: 1.55;
+      }
+
+      .selected-image {
+        aspect-ratio: 1.65;
+        border-radius: 10px;
+      }
+
+      .listing-image img,
+      .selected-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .listing-price {
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        padding: 0 10px;
+        border-radius: 999px;
+        background: rgba(17, 23, 34, 0.88);
+        color: #ffffff;
+        font-weight: 950;
+      }
+
+      .listing-body {
+        display: grid;
+        gap: 10px;
+        padding: 14px;
+      }
+
+      .listing-meta,
+      .seller-line,
+      .card-actions,
+      .admin-actions,
+      .status-line {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 26px;
+        padding: 0 8px;
+        border-radius: 7px;
+        background: var(--soft);
+        color: #dfe4ef;
+        font-size: 0.78rem;
+        font-weight: 860;
+      }
+
+      .tag.pending {
+        background: #fff1d6;
+        color: #7d4b0a;
+      }
+
+      .tag.approved {
+        background: #e7f9f2;
+        color: var(--green-dark);
+      }
+
+      .tag.rejected {
+        background: #fff0f1;
+        color: #9b282b;
+      }
+
+      .tag.fast {
+        background: #e8f1ff;
+        color: #1a63bd;
+      }
+
+      .listing-card h3 {
+        margin-bottom: 0;
+        overflow-wrap: anywhere;
+      }
+
+      .listing-card p {
+        min-height: 42px;
+        margin-bottom: 0;
+        line-height: 1.45;
+      }
+
+      .seller-line {
+        color: #aeb5c5;
+        font-size: 0.86rem;
+        font-weight: 790;
+      }
+
+      .buy-button,
+      .secondary-button,
+      .danger-button {
+        justify-content: center;
+      }
+
+      .card-actions button {
+        flex: 1;
+      }
+
+      .empty-state {
+        display: none;
+        min-height: 260px;
+        place-items: center;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        font-weight: 820;
+      }
+
+      .empty-state.show {
+        display: grid;
+      }
+
+      .selected-box,
+      .order-box,
+      .auth-panel,
+      .seller-studio,
+      .admin-panel {
+        padding: 16px;
+      }
+
+      .checkout-card {
+        display: grid;
+        gap: 14px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: linear-gradient(180deg, #1d202b 0%, #171922 100%);
+      }
+
+      .checkout-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .checkout-badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        padding: 0 10px;
+        border-radius: 999px;
+        background: #fff1d6;
+        color: #7d4b0a;
+        font-size: 0.78rem;
+        font-weight: 900;
+      }
+
+      .checkout-item {
+        display: grid;
+        grid-template-columns: 72px minmax(0, 1fr);
+        gap: 12px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #222631;
+      }
+
+      .checkout-item .selected-image {
+        aspect-ratio: 1;
+      }
+
+      .checkout-item h3,
+      .checkout-item p {
+        margin-bottom: 0;
+      }
+
+      .checkout-item h3 {
+        font-size: 0.98rem;
+      }
+
+      .payment-methods {
+        display: grid;
+        gap: 8px;
+      }
+
+      .payment-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 54px;
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #222631;
+        color: var(--ink);
+        text-align: left;
+      }
+
+      .payment-card:disabled {
+        cursor: not-allowed;
+        opacity: 0.56;
+        transform: none;
+      }
+
+      .payment-card.active {
+        border-color: rgba(255, 208, 90, 0.46);
+        background: rgba(255, 208, 90, 0.12);
+        box-shadow: 0 10px 24px rgba(255, 208, 90, 0.12);
+      }
+
+      .payment-card small,
+      .checkout-note,
+      .checkout-footnote {
+        color: var(--muted);
+      }
+
+      .payment-card strong,
+      .payment-card small {
+        display: block;
+      }
+
+      .price-breakdown {
+        display: grid;
+        gap: 8px;
+        padding-top: 4px;
+      }
+
+      .price-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        color: #c9cedb;
+        font-size: 0.92rem;
+        font-weight: 780;
+      }
+
+      .price-row.total {
+        margin-top: 4px;
+        padding-top: 12px;
+        border-top: 1px solid var(--line);
+        color: var(--ink);
+        font-size: 1rem;
+      }
+
+      .protection-panel {
+        display: grid;
+        gap: 9px;
+        padding: 13px;
+        border: 1px solid rgba(255, 208, 90, 0.28);
+        border-radius: 12px;
+        background: rgba(255, 208, 90, 0.1);
+      }
+
+      .protection-panel strong,
+      .protection-panel span {
+        display: block;
+      }
+
+      .protection-panel span {
+        color: #d5c38a;
+        font-size: 0.88rem;
+        line-height: 1.45;
+      }
+
+      .checkout-footnote {
+        margin: 0;
+        font-size: 0.82rem;
+        line-height: 1.45;
+      }
+
+      .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+      }
+
+      .order-total {
+        font-size: 1.8rem;
+        font-weight: 950;
+      }
+
+      .order-items,
+      .trust-stack,
+      .admin-list,
+      .my-listings {
+        display: grid;
+        gap: 8px;
+      }
+
+      .order-line,
+      .trust-row {
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 34px;
+        color: #dfe3ec;
+        font-size: 0.9rem;
+        font-weight: 780;
+      }
+
+      .order-line.with-thumb,
+      .my-item.with-thumb,
+      .admin-item.with-thumb {
+        grid-template-columns: auto minmax(0, 1fr);
+      }
+
+      .line-main {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .line-thumb {
+        display: block;
+        width: 46px;
+        height: 46px;
+        flex: 0 0 46px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        background: #303644;
+      }
+
+      .line-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .line-title {
+        display: grid;
+        gap: 2px;
+        min-width: 0;
+      }
+
+      .line-title strong,
+      .line-title span {
+        overflow-wrap: anywhere;
+      }
+
+      .order-line strong,
+      .trust-row strong {
+        text-align: right;
+      }
+
+      .trust-row {
+        min-height: 44px;
+        padding: 0 10px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #222631;
+        color: var(--muted);
+      }
+
+      .auth-shell {
+        display: grid;
+        grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+        gap: 14px;
+      }
+
+      .auth-tabs {
+        gap: 8px;
+      }
+
+      .auth-tabs button.active {
+        border-color: rgba(255, 208, 90, 0.34);
+        background: rgba(255, 208, 90, 0.12);
+        color: #ffd05a;
+      }
+
+      .auth-form.hidden,
+      .hidden {
+        display: none;
+      }
+
+      .studio-grid {
+        align-items: stretch;
+        gap: 16px;
+      }
+
+      .listing-form {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        flex: 1 1 auto;
+      }
+
+      .form-field {
+        display: grid;
+        gap: 7px;
+      }
+
+      .form-field.full {
+        grid-column: 1 / -1;
+      }
+
+      .preview-card {
+        display: grid;
+        align-content: start;
+        gap: 12px;
+        width: 330px;
+        flex: 0 0 330px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: #1b1d27;
+      }
+
+      .preview-image {
+        overflow: hidden;
+        aspect-ratio: 1.45;
+        border-radius: 12px;
+        background: var(--soft);
+      }
+
+      .preview-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .admin-item,
+      .my-item,
+      .order-card {
+        display: grid;
+        gap: 8px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #222631;
+      }
+
+      .account-order-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .account-order-column,
+      .order-list-mini {
+        display: grid;
+        align-content: start;
+        gap: 10px;
+      }
+
+      .mini-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .mini-head h3 {
+        margin: 0;
+        font-size: 1rem;
+      }
+
+      .order-items-mini {
+        display: grid;
+        gap: 6px;
+        padding-top: 8px;
+        border-top: 1px solid var(--line);
+      }
+
+      .order-pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .order-detail {
+        display: grid;
+        gap: 14px;
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: linear-gradient(180deg, #1d202b 0%, #171922 100%);
+        box-shadow: 0 14px 38px rgba(0, 0, 0, 0.24);
+      }
+
+      .order-room-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .order-room-head h2 {
+        margin: 4px 0 8px;
+        font-size: clamp(1.5rem, 2vw, 2.4rem);
+      }
+
+      .order-total-box {
+        min-width: 220px;
+        padding: 14px;
+        border: 1px solid rgba(255, 208, 90, 0.28);
+        border-radius: 12px;
+        background: rgba(255, 208, 90, 0.1);
+      }
+
+      .order-total-box strong {
+        display: block;
+        margin-top: 4px;
+        font-size: 1.55rem;
+      }
+
+      .transfer-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+        gap: 14px;
+      }
+
+      .payment-ledger,
+      .transfer-ledger {
+        display: grid;
+        align-content: start;
+        gap: 12px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #1b1d27;
+      }
+
+      .ledger-row,
+      .transfer-step,
+      .order-action-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .ledger-row {
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .ledger-row:last-child {
+        padding-bottom: 0;
+        border-bottom: 0;
+      }
+
+      .transfer-step {
+        justify-content: flex-start;
+        align-items: flex-start;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #222631;
+      }
+
+      .step-dot {
+        display: grid;
+        flex: 0 0 28px;
+        width: 28px;
+        height: 28px;
+        place-items: center;
+        border-radius: 50%;
+        background: rgba(255, 208, 90, 0.14);
+        color: #ffd05a;
+        font-size: 0.8rem;
+        font-weight: 950;
+      }
+
+      .transfer-step.done .step-dot {
+        background: #15a67a;
+        color: #ffffff;
+      }
+
+      .transfer-step.active {
+        border-color: rgba(49, 135, 255, 0.34);
+        background: rgba(49, 135, 255, 0.12);
+      }
+
+      .transfer-step.active .step-dot {
+        background: #3187ff;
+        color: #ffffff;
+      }
+
+      .transfer-step strong,
+      .transfer-step small {
+        display: block;
+      }
+
+      .order-action-bar {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+      }
+
+      .detail-page,
+      .seller-profile-page {
+        display: grid;
+        gap: 16px;
+      }
+
+      .detail-hero,
+      .seller-hero,
+      .wallet-grid,
+      .order-tools-grid {
+        display: grid;
+        gap: 14px;
+      }
+
+      .detail-hero {
+        grid-template-columns: minmax(280px, 0.92fr) minmax(0, 1.08fr);
+        align-items: stretch;
+      }
+
+      .detail-media,
+      .detail-info,
+      .seller-hero,
+      .wallet-card,
+      .chat-panel,
+      .rating-panel {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: #171922;
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+      }
+
+      .detail-media {
+        overflow: hidden;
+        min-height: 360px;
+      }
+
+      .detail-media img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .detail-info,
+      .seller-hero,
+      .wallet-card,
+      .chat-panel,
+      .rating-panel {
+        display: grid;
+        align-content: start;
+        gap: 12px;
+        padding: 16px;
+      }
+
+      .detail-price {
+        font-size: clamp(2rem, 4vw, 3.4rem);
+        line-height: 1;
+        font-weight: 950;
+        color: #ffd05a;
+      }
+
+      .seller-stat-grid,
+      .wallet-grid,
+      .order-tools-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .seller-stat,
+      .wallet-card {
+        min-height: 112px;
+      }
+
+      .seller-stat {
+        display: grid;
+        gap: 4px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #222631;
+      }
+
+      .seller-stat strong,
+      .wallet-card strong {
+        font-size: 1.4rem;
+      }
+
+      .badge-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .chat-panel {
+        grid-column: span 2;
+      }
+
+      .chat-list {
+        display: grid;
+        gap: 8px;
+        max-height: 260px;
+        overflow: auto;
+        padding-right: 4px;
+      }
+
+      .chat-message {
+        display: grid;
+        gap: 4px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #222631;
+      }
+
+      .chat-form {
+        display: grid;
+        gap: 8px;
+      }
+
+      .chat-form textarea,
+      .rating-panel textarea {
+        min-height: 86px;
+        padding: 10px 11px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #222631;
+        color: var(--ink);
+        resize: vertical;
+      }
+
+      .rating-panel select {
+        min-height: 42px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #222631;
+        color: var(--ink);
+      }
+
+      .toast {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        z-index: 40;
+        max-width: 360px;
+        padding: 14px 16px;
+        border-radius: 10px;
+        background: var(--dark);
+        color: #ffffff;
+        box-shadow: 0 18px 50px rgba(17, 23, 34, 0.24);
+        font-weight: 800;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(10px);
+        transition:
+          opacity 160ms ease,
+          transform 160ms ease;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      @media (max-width: 1280px) {
+        .listing-grid {
+          grid-template-columns: repeat(2, minmax(220px, 1fr));
+        }
+
+        .category-grid,
+        .market-list-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 1120px) {
+        .site-header,
+        .hero-grid,
+        .home-finder,
+        .detail-hero,
+        .seller-stat-grid,
+        .wallet-grid,
+        .order-tools-grid,
+        .market-shell,
+        .transfer-grid,
+        .studio-grid,
+        .auth-shell {
+          display: grid;
+          grid-template-columns: 1fr;
+        }
+
+        .filter-panel,
+        .order-panel,
+        .preview-card {
+          position: static;
+          width: 100%;
+        }
+
+        .filter-panel {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 820px) {
+        .page,
+        .site-header {
+          padding-left: 14px;
+          padding-right: 14px;
+        }
+
+        .hero-grid {
+          padding: 22px;
+        }
+
+        .metric-row,
+        .category-grid,
+        .market-list-grid,
+        .seller-stat-grid,
+        .wallet-grid,
+        .order-tools-grid,
+        .filter-panel,
+        .listing-grid,
+        .listing-form,
+        .account-order-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .results-head,
+        .results-tools,
+        .page-title,
+        .order-room-head,
+        .header-actions {
+          align-items: stretch;
+          flex-direction: column;
+        }
+      }
+
+      @media (max-width: 520px) {
+        h1 {
+          font-size: 2.2rem;
+          line-height: 1;
+        }
+
+        .chip-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#home" aria-label="LootXHub home">
+        <span class="brand-mark" aria-hidden="true">LX</span>
+        <span>
+          <strong>LootXHub</strong>
+          <small>Full marketplace app</small>
+        </span>
+      </a>
+
+      <label class="search-bar">
+        <select class="search-scope" id="globalSearchCategory" aria-label="Search category">
+          <option value="All">All</option>
+          <option value="Currency">Currency</option>
+          <option value="Accounts">Accounts</option>
+          <option value="Items">Items</option>
+          <option value="Boosting">Boosting</option>
+          <option value="Gift Cards">Gift Cards</option>
+        </select>
+        <input id="globalSearch" type="search" placeholder="Search for game, item, seller, or offer..." autocomplete="off" />
+        <button class="primary-button search-submit" id="globalSearchSubmit" type="button">Search</button>
+      </label>
+
+      <div class="header-actions">
+        <a class="nav-button" href="#home" data-nav-page="home">Home</a>
+        <a class="nav-button" href="#market" data-nav-page="market">Buy</a>
+        <a class="nav-button" href="#checkout" data-nav-page="checkout">Checkout</a>
+        <a class="nav-button" href="#sell" data-nav-page="sell">Sell</a>
+        <a class="nav-button" href="#account" data-nav-page="account">Account</a>
+        <button class="primary-button" id="logoutButton" type="button">Sign out</button>
+      </div>
+    </header>
+
+    <main class="page">
+      <div class="server-warning" id="serverWarning">
+        This version needs the local server. Open http://localhost:5173 instead of the file URL.
+      </div>
+
+      <nav class="top-nav" aria-label="Marketplace shortcuts">
+        <a href="#market" data-nav-page="market" data-category="Currency">Currency</a>
+        <a href="#market" data-nav-page="market" data-category="Accounts">Accounts</a>
+        <a href="#market" data-nav-page="market" data-category="Items">Items</a>
+        <a href="#market" data-nav-page="market" data-category="Boosting">Boosting</a>
+        <a href="#sell" data-nav-page="sell">Start selling</a>
+        <a href="#account" data-nav-page="account">Orders</a>
+        <a href="#admin" id="adminShortcut" class="hidden" data-nav-page="admin">Admin</a>
+      </nav>
+
+      <section class="page-view home-page" id="home" data-page="home">
+      <section class="hero">
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <div>
+              <p class="eyebrow">Game goods marketplace</p>
+              <h1>LootXHub</h1>
+            </div>
+            <p>
+              Buy and sell game currency, accounts, boosts, items, and gift cards with protected checkout and seller order tracking.
+            </p>
+            <div class="hero-actions">
+              <a class="primary-button" href="#sell">Start selling</a>
+              <a class="ghost-button" href="#market">Browse marketplace</a>
+            </div>
+          </div>
+
+          <aside class="showcase-card" aria-label="Featured marketplace listing">
+            <div class="hero-stage" aria-hidden="true">
+              <span class="hero-cloud one"></span>
+              <span class="hero-cloud two"></span>
+              <span class="hero-character c1">LX<small></small></span>
+              <span class="hero-character c2">$<small></small></span>
+              <span class="hero-character c3">XP<small></small></span>
+              <span class="hero-character c4">GG<small></small></span>
+            </div>
+            <div class="showcase-info">
+              <img id="heroImage" alt="Featured listing artwork" />
+              <strong id="heroTitle">Featured listing</strong>
+              <div class="showcase-row">
+                <span id="heroSeller">Verified seller</span>
+                <span id="heroPrice">$0.00</span>
+              </div>
+            </div>
+          </aside>
         </div>
-      </div>
-      <span class="price">$12.99</span>
-    </div>
+      </section>
 
-    <div class="item">
-      <div class="item-left">
-        <div class="emoji">🧠</div>
-        <div>
-          <strong>Brainrot Item</strong><br>
-          <small>Trusted Seller</small>
+      <section class="home-finder" aria-label="Marketplace finder">
+        <article class="finder-panel">
+          <div>
+            <p class="eyebrow">Find offers fast</p>
+            <h2>Search by game, seller, item, or category</h2>
+          </div>
+          <label class="finder-search">
+            <span aria-hidden="true">S</span>
+            <input id="homeSearch" type="search" placeholder="Try Robux, Pet Simulator gems, Grow a Garden tokens..." />
+          </label>
+          <div class="game-pills" aria-label="Quick searches">
+            <button class="pill" type="button" data-game="Roblox">Roblox</button>
+            <button class="pill" type="button" data-game="Grow a Garden">Grow a Garden</button>
+            <button class="pill" type="button" data-game="Pet Simulator 99">Pet Sim 99</button>
+            <button class="pill" type="button" data-game="Blade Ball">Blade Ball</button>
+            <button class="pill" type="button" data-game="Adopt Me">Adopt Me</button>
+          </div>
+        </article>
+        <aside class="popular-panel">
+          <div>
+            <p class="eyebrow">Popular</p>
+            <h2>Buyer shortcuts</h2>
+          </div>
+          <div class="popular-grid">
+            <a class="nav-button" href="#market">Live offers</a>
+            <a class="nav-button" href="#checkout">Checkout</a>
+            <a class="nav-button" href="#account">My orders</a>
+            <a class="nav-button" href="#sell">Seller studio</a>
+          </div>
+        </aside>
+      </section>
+
+      <section class="market-list-grid" aria-label="Popular marketplace lists">
+        <article class="market-list">
+          <div>
+            <p class="eyebrow">Popular Currency</p>
+            <h2>Fast stock</h2>
+          </div>
+          <a href="#market" data-category="Currency"><span class="game-badge" style="--badge-bg:#ffd05a">R</span> Roblox Robux <small>Instant</small></a>
+          <a href="#market" data-category="Currency"><span class="game-badge" style="--badge-bg:#72e788">G</span> Grow a Garden Tokens <small>Hot</small></a>
+          <a href="#market" data-category="Currency"><span class="game-badge" style="--badge-bg:#5caeff">P</span> Pet Simulator Gems <small>Deals</small></a>
+          <a href="#market" data-category="Currency"><span class="game-badge" style="--badge-bg:#ff7a63">B</span> Blade Ball Tokens <small>Live</small></a>
+        </article>
+        <article class="market-list">
+          <div>
+            <p class="eyebrow">Popular Accounts</p>
+            <h2>Ready profiles</h2>
+          </div>
+          <a href="#market" data-category="Accounts"><span class="game-badge" style="--badge-bg:#ffd05a">R</span> Roblox Accounts <small>Verified</small></a>
+          <a href="#market" data-category="Accounts"><span class="game-badge" style="--badge-bg:#ff8b3d">F</span> Fortnite Accounts <small>Rare</small></a>
+          <a href="#market" data-category="Accounts"><span class="game-badge" style="--badge-bg:#ff4f5f">V</span> Valorant Accounts <small>Ranked</small></a>
+          <a href="#market" data-category="Accounts"><span class="game-badge" style="--badge-bg:#52c678">M</span> Minecraft Accounts <small>Fresh</small></a>
+        </article>
+        <article class="market-list">
+          <div>
+            <p class="eyebrow">Popular Boosts</p>
+            <h2>Seller services</h2>
+          </div>
+          <a href="#market" data-category="Boosting"><span class="game-badge" style="--badge-bg:#9d7cff">↑</span> Rank Boosting <small>Manual</small></a>
+          <a href="#market" data-category="Boosting"><span class="game-badge" style="--badge-bg:#4fd6ff">Q</span> Quest Carry <small>Fast</small></a>
+          <a href="#market" data-category="Boosting"><span class="game-badge" style="--badge-bg:#ffd05a">XP</span> Leveling <small>Custom</small></a>
+          <a href="#market" data-category="Boosting"><span class="game-badge" style="--badge-bg:#72e788">C</span> Coaching <small>Trusted</small></a>
+        </article>
+        <article class="market-list">
+          <div>
+            <p class="eyebrow">Popular Items</p>
+            <h2>Rare drops</h2>
+          </div>
+          <a href="#market" data-category="Items"><span class="game-badge" style="--badge-bg:#ff75b7">P</span> Pets <small>Trade</small></a>
+          <a href="#market" data-category="Items"><span class="game-badge" style="--badge-bg:#5caeff">S</span> Skins <small>Clean</small></a>
+          <a href="#market" data-category="Items"><span class="game-badge" style="--badge-bg:#ff8b3d">B</span> Bundles <small>Value</small></a>
+          <a href="#market" data-category="Gift Cards"><span class="game-badge" style="--badge-bg:#ffd05a">G</span> Gift Cards <small>Codes</small></a>
+        </article>
+      </section>
+      </section>
+
+      <section class="auth-shell page-view" id="account" data-page="account">
+        <aside class="auth-panel">
+          <p class="eyebrow">Account</p>
+          <h2 id="accountTitle">Sign in or create an account</h2>
+          <p id="accountText">Seller listing and checkout both require an account.</p>
+          <div id="profileBox" class="hidden">
+            <div class="status-line">
+              <span class="tag approved" id="profileRole">buyer</span>
+              <strong id="profileName">User</strong>
+            </div>
+            <p class="help-text" id="profileEmail"></p>
+          </div>
+        </aside>
+
+        <section class="auth-panel" id="authForms">
+          <div class="auth-tabs">
+            <button class="secondary-button active" id="showLogin" type="button">Sign in</button>
+            <button class="secondary-button" id="showRegister" type="button">Register</button>
+          </div>
+          <form class="auth-form" id="loginForm">
+            <div class="form-field">
+              <label for="loginEmail">Email</label>
+              <input id="loginEmail" type="email" value="admin@lootxhub.local" required />
+            </div>
+            <div class="form-field">
+              <label for="loginPassword">Password</label>
+              <input id="loginPassword" type="password" value="ChangeMe123!" required />
+            </div>
+            <button class="primary-button" type="submit">Sign in</button>
+          </form>
+          <form class="auth-form hidden" id="registerForm">
+            <div class="form-field">
+              <label for="registerUsername">Username</label>
+              <input id="registerUsername" required placeholder="GemMaster" />
+            </div>
+            <div class="form-field">
+              <label for="registerEmail">Email</label>
+              <input id="registerEmail" type="email" required placeholder="you@example.com" />
+            </div>
+            <div class="form-field">
+              <label for="registerPassword">Password</label>
+              <input id="registerPassword" type="password" required minlength="8" placeholder="8+ characters" />
+            </div>
+            <button class="primary-button" type="submit">Create account</button>
+          </form>
+        </section>
+
+        <section class="auth-panel hidden" id="accountOrdersPanel">
+          <div>
+            <p class="eyebrow">Seller wallet</p>
+            <div class="wallet-grid" id="walletGrid"></div>
+          </div>
+          <div class="account-order-grid">
+            <article class="account-order-column">
+              <div class="mini-head">
+                <div>
+                  <p class="eyebrow">Buying</p>
+                  <h3>My purchases</h3>
+                </div>
+                <span class="tag approved" id="myOrderCount">0</span>
+              </div>
+              <div class="order-list-mini" id="myOrdersList"></div>
+            </article>
+            <article class="account-order-column">
+              <div class="mini-head">
+                <div>
+                  <p class="eyebrow">Selling</p>
+                  <h3>Sold orders</h3>
+                </div>
+                <span class="tag fast" id="sellerOrderCount">0</span>
+              </div>
+              <div class="order-list-mini" id="sellerOrdersList"></div>
+            </article>
+          </div>
+        </section>
+      </section>
+
+      <section class="detail-page page-view" id="listing" data-page="listing">
+        <div class="detail-hero">
+          <div class="detail-media" id="detailMedia"></div>
+          <article class="detail-info">
+            <p class="eyebrow">Listing details</p>
+            <h1 id="detailTitle">Listing</h1>
+            <div class="detail-price" id="detailPrice">$0.00</div>
+            <div class="badge-row" id="detailTags"></div>
+            <p id="detailDescription"></p>
+            <div class="seller-stat-grid" id="detailSellerStats"></div>
+            <div class="admin-actions">
+              <button class="primary-button" id="detailBuyButton" type="button">Add to checkout</button>
+              <button class="secondary-button" id="detailSellerButton" type="button">View seller</button>
+              <a class="ghost-button" href="#market">Back to marketplace</a>
+            </div>
+          </article>
         </div>
-      </div>
-      <span class="price">$7.99</span>
-    </div>
+      </section>
 
-    <div class="item">
-      <div class="item-left">
-        <div class="emoji">💰</div>
-        <div>
-          <strong>Coins Pack</strong><br>
-          <small>Quick Support</small>
+      <section class="seller-profile-page page-view" id="seller" data-page="seller">
+        <article class="seller-hero">
+          <p class="eyebrow">Seller profile</p>
+          <h1 id="sellerProfileName">Seller</h1>
+          <div class="badge-row" id="sellerBadges"></div>
+          <div class="seller-stat-grid" id="sellerStats"></div>
+        </article>
+        <section class="results-panel">
+          <div class="results-head">
+            <div>
+              <p class="eyebrow">Seller stock</p>
+              <h2>Active listings</h2>
+            </div>
+            <a class="ghost-button" href="#market">Browse all</a>
+          </div>
+          <div class="listing-grid" id="sellerListings"></div>
+        </section>
+      </section>
+
+      <section class="order-detail page-view hidden" id="order" data-page="order">
+        <div class="order-room-head">
+          <div>
+            <p class="eyebrow" id="orderDetailEyebrow">Order room</p>
+            <h2 id="orderDetailTitle">Order #</h2>
+            <p id="orderDetailText">Payment, delivery, and transfer status will appear here.</p>
+          </div>
+          <aside class="order-total-box">
+            <small>Total</small>
+            <strong id="detailOrderTotal">$0.00</strong>
+            <span class="muted" id="detailOrderMeta">Payment pending</span>
+          </aside>
         </div>
-      </div>
-      <span class="price">$4.99</span>
-    </div>
-  </div>
-</main>
 
-<section id="features">
-  <h2 class="title">Why LootXHub?</h2>
-  <p class="sub">A sharper homepage that feels more professional, trusted, and easy to shop from.</p>
+        <div class="transfer-grid">
+          <article class="payment-ledger">
+            <div>
+              <p class="eyebrow">Payment</p>
+              <h3>Secure order hold</h3>
+            </div>
+            <div id="paymentLedgerRows"></div>
+          </article>
+          <article class="transfer-ledger">
+            <div>
+              <p class="eyebrow">Transfer</p>
+              <h3>Delivery flow</h3>
+            </div>
+            <div id="transferSteps"></div>
+          </article>
+        </div>
 
-  <div class="grid">
-    <div class="card">
-      <div class="icon">⚡</div>
-      <h3>Fast Delivery</h3>
-      <p>Show buyers that Roblox goods can be delivered quickly and smoothly.</p>
-    </div>
+        <div class="payment-ledger">
+          <div class="mini-head">
+            <div>
+              <p class="eyebrow">Items</p>
+              <h3 id="detailItemCount">0 items</h3>
+            </div>
+            <span class="tag" id="detailViewerRole">buyer</span>
+          </div>
+          <div class="order-items-mini" id="detailOrderItems"></div>
+        </div>
 
-    <div class="card">
-      <div class="icon">🛡️</div>
-      <h3>Trusted Look</h3>
-      <p>A clean brand style makes your store feel more serious and reliable.</p>
-    </div>
+        <div class="order-tools-grid">
+          <article class="chat-panel">
+            <div>
+              <p class="eyebrow">Order chat</p>
+              <h3>Buyer and seller messages</h3>
+            </div>
+            <div class="chat-list" id="orderChatList"></div>
+            <form class="chat-form" id="orderMessageForm">
+              <textarea id="orderMessageText" placeholder="Write delivery info, questions, or proof notes..."></textarea>
+              <button class="primary-button" type="submit">Send message</button>
+            </form>
+          </article>
+          <article class="rating-panel">
+            <div>
+              <p class="eyebrow">Protection</p>
+              <h3>Rate or hold</h3>
+            </div>
+            <select id="ratingScore" aria-label="Rating">
+              <option value="5">5 stars</option>
+              <option value="4">4 stars</option>
+              <option value="3">3 stars</option>
+              <option value="2">2 stars</option>
+              <option value="1">1 star</option>
+            </select>
+            <textarea id="ratingComment" placeholder="Leave feedback after completion..."></textarea>
+            <button class="secondary-button" id="submitRating" type="button">Submit rating</button>
+            <textarea id="disputeReason" placeholder="Describe what went wrong before holding the order..."></textarea>
+            <button class="danger-button" id="openDispute" type="button">Hold transaction</button>
+          </article>
+        </div>
 
-    <div class="card">
-      <div class="icon">📱</div>
-      <h3>Mobile Ready</h3>
-      <p>The design works on phones, tablets, laptops, and desktops.</p>
-    </div>
-  </div>
-</section>
+        <div class="order-action-bar" id="orderActions"></div>
+      </section>
 
-<section id="products">
-  <h2 class="title">Featured Products</h2>
-  <p class="sub">Swap these examples with your real listings, prices, and images.</p>
+      <section class="category-grid page-view" id="categories" data-page="home" aria-label="Marketplace categories">
+        <button class="category-card chip-button active" type="button" data-category="All">
+          <span><strong>All listings</strong><small>Everything live</small></span>
+          <span class="category-icon" style="--cat-bg: linear-gradient(135deg, #3187ff, #21bad5)">A</span>
+        </button>
+        <button class="category-card chip-button" type="button" data-category="Currency">
+          <span><strong>Currency</strong><small>Robux, gems, tokens</small></span>
+          <span class="category-icon" style="--cat-bg: linear-gradient(135deg, #15a67a, #087358)">$</span>
+        </button>
+        <button class="category-card chip-button" type="button" data-category="Items">
+          <span><strong>Items</strong><small>Pets, bundles, sets</small></span>
+          <span class="category-icon" style="--cat-bg: linear-gradient(135deg, #f4b83f, #ef7b45)">I</span>
+        </button>
+        <button class="category-card chip-button" type="button" data-category="Accounts">
+          <span><strong>Accounts</strong><small>Starter and stacked</small></span>
+          <span class="category-icon" style="--cat-bg: linear-gradient(135deg, #7b61ff, #3187ff)">U</span>
+        </button>
+        <button class="category-card chip-button" type="button" data-category="Boosting">
+          <span><strong>Boosting</strong><small>Custom goals</small></span>
+          <span class="category-icon" style="--cat-bg: linear-gradient(135deg, #e65783, #ef7b45)">B</span>
+        </button>
+        <button class="category-card chip-button" type="button" data-category="Gift Cards">
+          <span><strong>Gift Cards</strong><small>Codes and requests</small></span>
+          <span class="category-icon" style="--cat-bg: linear-gradient(135deg, #21bad5, #15a67a)">G</span>
+        </button>
+      </section>
 
-  <div class="grid">
-    <div class="product">
-      <div class="product-img">🐾</div>
-      <h3>Adopt Me Pet</h3>
-      <p>Example listing for a popular Roblox pet.</p>
-      <div class="product-bottom">
-        <span class="price">$12.99</span>
-        <button class="add">Add</button>
-      </div>
-    </div>
+      <section class="metric-row page-view" data-page="home" aria-label="Marketplace metrics">
+        <article class="metric-card">
+          <small>Matching listings</small>
+          <strong id="matchCount">0</strong>
+          <span class="positive">Database backed</span>
+        </article>
+        <article class="metric-card">
+          <small>Live listings</small>
+          <strong id="pendingCount">0</strong>
+          <span class="neutral">Public marketplace</span>
+        </article>
+        <article class="metric-card">
+          <small>My listings</small>
+          <strong id="myListingCount">0</strong>
+          <span class="positive">Seller dashboard</span>
+        </article>
+        <article class="metric-card">
+          <small>Order total</small>
+          <strong id="metricTotal">$0.00</strong>
+          <span class="neutral" id="metricItems">0 selected</span>
+        </article>
+      </section>
 
-    <div class="product">
-      <div class="product-img">🧠</div>
-      <h3>Brainrot Item</h3>
-      <p>Example listing for a Roblox item.</p>
-      <div class="product-bottom">
-        <span class="price">$7.99</span>
-        <button class="add">Add</button>
-      </div>
-    </div>
+      <section class="market-shell page-view" id="market" data-page="market">
+        <aside class="filter-panel" aria-label="Marketplace filters">
+          <div class="filter-title">
+            <div>
+              <p class="eyebrow">Filters</p>
+              <h2>Find offers</h2>
+            </div>
+            <button class="secondary-button" id="resetFilters" type="button">Reset</button>
+          </div>
+          <div class="filter-group">
+            <label for="gameFilter">Game</label>
+            <select id="gameFilter">
+              <option value="All">All Roblox games</option>
+              <option value="Grow a Garden">Grow a Garden</option>
+              <option value="Pet Simulator 99">Pet Simulator 99</option>
+              <option value="Blade Ball">Blade Ball</option>
+              <option value="Adopt Me">Adopt Me</option>
+              <option value="Roblox">Roblox</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Category</label>
+            <div class="chip-grid">
+              <button class="chip-button active" type="button" data-category="All">All</button>
+              <button class="chip-button" type="button" data-category="Currency">Currency</button>
+              <button class="chip-button" type="button" data-category="Items">Items</button>
+              <button class="chip-button" type="button" data-category="Accounts">Accounts</button>
+              <button class="chip-button" type="button" data-category="Boosting">Boosting</button>
+              <button class="chip-button" type="button" data-category="Gift Cards">Gift Cards</button>
+            </div>
+          </div>
+          <div class="filter-group">
+            <label for="deliveryFilter">Delivery</label>
+            <select id="deliveryFilter">
+              <option value="All">All methods</option>
+              <option value="Instant">Instant</option>
+              <option value="Coordinated">Coordinated</option>
+              <option value="Manual">Manual</option>
+              <option value="Quote">Quote</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="priceRange">Max price</label>
+            <input id="priceRange" type="range" min="0" max="100" value="100" />
+            <div class="range-value">
+              <span>$0</span>
+              <strong id="priceValue">$100+</strong>
+            </div>
+          </div>
+        </aside>
 
-    <div class="product">
-      <div class="product-img">💰</div>
-      <h3>Coins Pack</h3>
-      <p>Example listing for coins or boosts.</p>
-      <div class="product-bottom">
-        <span class="price">$4.99</span>
-        <button class="add">Add</button>
-      </div>
-    </div>
-  </div>
-</section>
+        <section class="results-panel">
+          <div class="results-head">
+            <div>
+              <p class="eyebrow">Marketplace</p>
+              <h2>Approved listings</h2>
+            </div>
+            <select class="sort-select" id="sortSelect" aria-label="Sort listings">
+              <option value="recommended">Recommended</option>
+              <option value="priceLow">Lowest price</option>
+              <option value="priceHigh">Highest price</option>
+              <option value="newest">Newest</option>
+            </select>
+          </div>
+          <div class="results-tools">
+            <div class="game-pills" aria-label="Popular games">
+              <button class="pill active" type="button" data-game="All">All games</button>
+              <button class="pill" type="button" data-game="Grow a Garden">Grow a Garden</button>
+              <button class="pill" type="button" data-game="Pet Simulator 99">Pet Sim 99</button>
+              <button class="pill" type="button" data-game="Blade Ball">Blade Ball</button>
+              <button class="pill" type="button" data-game="Adopt Me">Adopt Me</button>
+            </div>
+            <span class="muted" id="resultSummary">Showing listings</span>
+          </div>
+          <div class="listing-grid" id="listingGrid"></div>
+          <div class="empty-state" id="emptyState">No matching listings. Try widening the filters.</div>
+        </section>
+      </section>
 
-<section id="contact">
-  <div class="contact-box">
-    <h2 class="title">Need Help?</h2>
-    <p class="sub">Questions, custom orders, or support? Contact LootXHub below.</p>
-    <a class="email" href="mailto:lootxhub@gmail.com">lootxhub@gmail.com</a>
-  </div>
-</section>
+      <section class="checkout-page page-view" id="checkout" data-page="checkout">
+        <aside class="order-panel" id="orders" aria-label="Order preview">
+          <div class="checkout-card">
+            <div class="checkout-header">
+              <div>
+                <p class="eyebrow">Secure checkout</p>
+                <h2>Review your order</h2>
+              </div>
+              <span class="checkout-badge" id="checkoutCount">0 items</span>
+            </div>
 
-<footer>
-  <p>© 2026 LootXHub</p>
-  <p>Roblox goods marketplace</p>
-</footer>
+            <div class="checkout-item">
+              <div class="selected-image" id="selectedImage"></div>
+              <div>
+                <h3 id="selectedTitle">Select a listing</h3>
+                <p id="selectedMeta">Choose details on any listing to preview it here.</p>
+                <button class="secondary-button" id="selectedAdd" type="button">Add selected</button>
+              </div>
+            </div>
 
-</body>
+            <div class="order-items" id="orderItems"></div>
+
+            <div>
+              <h3>Payment method</h3>
+              <div class="payment-methods" id="paymentCards">
+                <button class="payment-card active" type="button" data-payment-card="demo">
+                  <span>
+                    <strong>Demo payment</strong>
+                    <small>Instant paid status for testing</small>
+                  </span>
+                  <span class="tag approved">Ready</span>
+                </button>
+                <button class="payment-card" type="button" data-payment-card="stripe">
+                  <span>
+                    <strong>Stripe Checkout</strong>
+                    <small id="stripeCardText">Add keys to enable card payments</small>
+                  </span>
+                  <span class="tag fast">Cards</span>
+                </button>
+                <button class="payment-card" type="button" data-payment-card="manual">
+                  <span>
+                    <strong>Manual review</strong>
+                    <small>Hold order for support approval</small>
+                  </span>
+                  <span class="tag pending">Manual</span>
+                </button>
+              </div>
+            </div>
+
+            <select class="visually-hidden" id="paymentMethod" aria-label="Payment method">
+              <option value="demo">Demo payment</option>
+              <option value="stripe" id="stripeOption">Stripe Checkout</option>
+              <option value="manual">Manual review</option>
+            </select>
+
+            <div class="price-breakdown">
+              <div class="price-row">
+                <span>Order price</span>
+                <strong id="checkoutSubtotal">$0.00</strong>
+              </div>
+              <div class="price-row">
+                <span>Buyer protection</span>
+                <strong>Included</strong>
+              </div>
+              <div class="price-row">
+                <span>Discount</span>
+                <strong id="checkoutDiscount">$0.00</strong>
+              </div>
+              <div class="price-row total">
+                <span>Total due</span>
+                <strong id="orderTotal">$0.00</strong>
+              </div>
+            </div>
+
+            <div class="protection-panel">
+              <strong>LootShield protection</strong>
+              <span>Payment state, seller delivery, refunds, and disputes are tracked on the order record.</span>
+            </div>
+
+            <button class="primary-button" id="checkoutButton" type="button">Place order</button>
+            <p class="checkout-footnote">Checkout creates a database order. Stripe redirects to hosted payment when keys are configured.</p>
+          </div>
+        </aside>
+      </section>
+
+      <section class="seller-studio page-view" id="sell" data-page="sell">
+        <div>
+          <p class="eyebrow">Seller studio</p>
+          <h2>Create a public listing</h2>
+          <p class="help-text">Listings go live as soon as you post them. Admins can still remove or reject unsafe offers.</p>
+        </div>
+        <div class="studio-grid">
+          <form class="listing-form" id="listingForm">
+            <div class="form-field">
+              <label for="listingTitle">Listing title</label>
+              <input id="listingTitle" required placeholder="Huge gem pack" />
+            </div>
+            <div class="form-field">
+              <label for="listingGame">Game</label>
+              <select id="listingGame">
+                <option>Grow a Garden</option>
+                <option>Pet Simulator 99</option>
+                <option>Blade Ball</option>
+                <option>Adopt Me</option>
+                <option>Roblox</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="listingCategory">Category</label>
+              <select id="listingCategory">
+                <option>Currency</option>
+                <option>Items</option>
+                <option>Accounts</option>
+                <option>Boosting</option>
+                <option>Gift Cards</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="listingPrice">Price</label>
+              <input id="listingPrice" type="number" min="0" step="0.01" required placeholder="12.99" />
+            </div>
+            <div class="form-field">
+              <label for="listingDelivery">Delivery</label>
+              <select id="listingDelivery">
+                <option>Instant</option>
+                <option>Coordinated</option>
+                <option>Manual</option>
+                <option>Quote</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="listingImageFile">Upload image</label>
+              <input id="listingImageFile" type="file" accept="image/*" />
+            </div>
+            <div class="form-field full">
+              <label for="listingImageUrl">Image URL</label>
+              <input id="listingImageUrl" type="url" placeholder="https://example.com/item.png" />
+            </div>
+            <div class="form-field full">
+              <label for="listingDescription">Description</label>
+              <textarea id="listingDescription" required placeholder="Describe exactly what the buyer gets."></textarea>
+            </div>
+            <div class="form-field full">
+              <button class="primary-button" type="submit">Publish listing</button>
+            </div>
+          </form>
+          <aside class="preview-card">
+            <p class="eyebrow">My listings</p>
+            <div class="my-listings" id="myListings"></div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="admin-panel page-view hidden" id="adminPanel" data-page="admin">
+        <div class="results-head">
+          <div>
+            <p class="eyebrow">Admin console</p>
+            <h2>Moderation and orders</h2>
+          </div>
+          <button class="secondary-button" id="refreshAdmin" type="button">Refresh</button>
+        </div>
+        <div>
+          <h3>Listing management</h3>
+          <div class="admin-list" id="adminListings"></div>
+        </div>
+        <div>
+          <h3>Orders</h3>
+          <div class="admin-list" id="adminOrders"></div>
+        </div>
+        <div>
+          <h3>Disputes</h3>
+          <div class="admin-list" id="adminDisputes"></div>
+        </div>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      const state = {
+        user: null,
+        listings: [],
+        myListings: [],
+        myOrders: [],
+        sellerOrders: [],
+        wallet: null,
+        activeOrder: null,
+        activeMessages: [],
+        activeListing: null,
+        activeSeller: null,
+        checkoutReturnHandled: false,
+        adminListings: [],
+        adminOrders: [],
+        adminDisputes: [],
+        config: { stripeConfigured: false, stripeWebhookConfigured: false, stripeCurrency: "usd" },
+        cart: [],
+        selectedId: null,
+        query: "",
+        category: "All",
+        game: "All",
+        delivery: "All",
+        maxPrice: 100,
+        sort: "recommended",
+        imageDataUrl: "",
+      };
+
+      const $ = (selector) => document.querySelector(selector);
+      const money = (value) =>
+        Number(value) === 0
+          ? "Quote"
+          : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(value));
+      const escapeHTML = (value) =>
+        String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[char]);
+
+      async function api(path, options = {}) {
+        if (location.protocol === "file:") {
+          throw new Error("Open http://127.0.0.1:5173 so the marketplace API can be reached.");
+        }
+        const response = await fetch(path, {
+          headers: options.body instanceof FormData ? {} : { "Content-Type": "application/json" },
+          ...options,
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || "Request failed.");
+        return payload;
+      }
+
+      function toast(message) {
+        const node = $("#toast");
+        node.textContent = message;
+        node.classList.add("show");
+        clearTimeout(toast.timer);
+        toast.timer = setTimeout(() => node.classList.remove("show"), 1800);
+      }
+
+      function fallbackImage(title = "LootXHub") {
+        const safeTitle = escapeHTML(title).slice(0, 34);
+        const svg = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="900" height="580" viewBox="0 0 900 580">
+            <defs>
+              <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+                <stop offset="0" stop-color="#ffd05a"/>
+                <stop offset="0.5" stop-color="#3187ff"/>
+                <stop offset="1" stop-color="#15a67a"/>
+              </linearGradient>
+            </defs>
+            <rect width="900" height="580" fill="#171922"/>
+            <circle cx="720" cy="100" r="190" fill="#222c4a"/>
+            <circle cx="140" cy="460" r="210" fill="#203a32"/>
+            <rect x="235" y="158" width="430" height="264" rx="42" fill="url(#g)"/>
+            <text x="450" y="292" text-anchor="middle" font-family="Arial" font-size="52" font-weight="900" fill="#111318">LX</text>
+            <text x="450" y="360" text-anchor="middle" font-family="Arial" font-size="28" font-weight="800" fill="#ffffff">${safeTitle}</text>
+          </svg>
+        `;
+        return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+      }
+
+      function imageTag(listing) {
+        const title = listing?.title || "LootXHub";
+        const fallback = fallbackImage(title);
+        const source = listing?.imageUrl || fallback;
+        return `<img src="${escapeHTML(source)}" alt="${escapeHTML(title)} image" loading="lazy" onerror="this.onerror=null;this.src='${escapeHTML(fallback)}'" />`;
+      }
+
+      function visibleListings() {
+        return state.listings
+          .filter((item) => `${item.title} ${item.game} ${item.category} ${item.sellerName} ${item.description}`.toLowerCase().includes(state.query.toLowerCase()))
+          .filter((item) => state.category === "All" || item.category === state.category)
+          .filter((item) => state.game === "All" || item.game === state.game)
+          .filter((item) => state.delivery === "All" || item.deliveryMethod === state.delivery)
+          .filter((item) => Number(item.price) === 0 || Number(item.price) <= state.maxPrice)
+          .sort((a, b) => {
+            if (state.sort === "priceLow") return Number(a.price) - Number(b.price);
+            if (state.sort === "priceHigh") return Number(b.price) - Number(a.price);
+            if (state.sort === "newest") return String(b.createdAt).localeCompare(String(a.createdAt));
+            return String(b.sellerRole).localeCompare(String(a.sellerRole)) || Number(a.price) - Number(b.price);
+          });
+      }
+
+      function renderAccount() {
+        const loggedIn = Boolean(state.user);
+        $("#authForms").classList.toggle("hidden", loggedIn);
+        $("#accountOrdersPanel").classList.toggle("hidden", !loggedIn);
+        $("#profileBox").classList.toggle("hidden", !loggedIn);
+        $("#logoutButton").classList.toggle("hidden", !loggedIn);
+        $("#adminPanel").classList.toggle("hidden", !state.user || state.user.role !== "admin");
+        $("#adminShortcut").classList.toggle("hidden", !state.user || state.user.role !== "admin");
+
+        if (!loggedIn) {
+          $("#accountTitle").textContent = "Sign in or create an account";
+          $("#accountText").textContent = "Seller listing and checkout both require an account.";
+          return;
+        }
+
+        $("#accountTitle").textContent = `Welcome, ${state.user.username}`;
+        $("#accountText").textContent = "You can buy, create listings, and track your own seller dashboard.";
+        $("#profileName").textContent = state.user.username;
+        $("#profileEmail").textContent = state.user.email;
+        $("#profileRole").textContent = state.user.role;
+      }
+
+      function orderItemsMarkup(order) {
+        return order.items
+          .map(
+            (item) => `
+              <div class="order-line with-thumb">
+                <span class="line-main">
+                  <span class="line-thumb">${imageTag(item)}</span>
+                  <span>${escapeHTML(item.title)}</span>
+                </span>
+                <strong>${money(item.price)}</strong>
+              </div>
+            `,
+          )
+          .join("");
+      }
+
+      function paymentConfirmed(order) {
+        return ["paid", "demo_paid"].includes(order.paymentStatus) || ["paid", "delivering", "complete"].includes(order.orderStatus);
+      }
+
+      function orderClosed(order) {
+        return ["cancelled", "refunded", "disputed", "complete"].includes(order.orderStatus);
+      }
+
+      function transferStepClass(done, active) {
+        return `transfer-step${done ? " done" : ""}${active ? " active" : ""}`;
+      }
+
+      function renderAccountOrders() {
+        $("#myOrderCount").textContent = state.myOrders.length;
+        $("#sellerOrderCount").textContent = state.sellerOrders.length;
+        const wallet = state.wallet || { pending: 0, available: 0, held: 0, grossSales: 0, completedOrders: 0, pendingOrders: 0 };
+        $("#walletGrid").innerHTML = `
+          <article class="wallet-card">
+            <small>Available</small>
+            <strong>${money(wallet.available)}</strong>
+            <span class="muted">Completed orders</span>
+          </article>
+          <article class="wallet-card">
+            <small>Pending</small>
+            <strong>${money(wallet.pending)}</strong>
+            <span class="muted">${wallet.pendingOrders || 0} order(s)</span>
+          </article>
+          <article class="wallet-card">
+            <small>Held</small>
+            <strong>${money(wallet.held)}</strong>
+            <span class="muted">Disputes and manual review</span>
+          </article>
+        `;
+
+        $("#myOrdersList").innerHTML =
+          state.myOrders
+            .map(
+              (order) => `
+                <div class="order-card">
+                  <div class="status-line">
+                    <span class="tag approved">#${order.id}</span>
+                    <strong>${money(order.total)}</strong>
+                  </div>
+                  <span class="muted">${escapeHTML(order.paymentStatus)} | ${escapeHTML(order.orderStatus)} | ${order.items.length} item(s)</span>
+                  <div class="order-pill-row">
+                    ${[...new Set(order.items.map((item) => item.sellerName))]
+                      .map((seller) => `<span class="tag">${escapeHTML(seller)}</span>`)
+                      .join("")}
+                  </div>
+                  <div class="order-items-mini">${orderItemsMarkup(order)}</div>
+                  <div class="admin-actions">
+                    <button class="secondary-button" type="button" data-open-order="${order.id}">View order</button>
+                  </div>
+                </div>
+              `,
+            )
+            .join("") || `<p class="help-text">No purchases yet.</p>`;
+
+        $("#sellerOrdersList").innerHTML =
+          state.sellerOrders
+            .map(
+              (order) => `
+                <div class="order-card">
+                  <div class="status-line">
+                    <span class="tag ${order.orderStatus === "complete" ? "approved" : "fast"}">#${order.id}</span>
+                    <strong>${money(order.total)}</strong>
+                  </div>
+                  <span class="muted">Buyer ${escapeHTML(order.buyerName)} | ${escapeHTML(order.paymentStatus)} | ${escapeHTML(order.orderStatus)}</span>
+                  <div class="order-items-mini">${orderItemsMarkup(order)}</div>
+                  ${
+                    order.orderStatus === "awaiting_payment"
+                      ? `<span class="muted">Waiting for payment confirmation.</span>`
+                      : ["cancelled", "refunded", "disputed", "complete"].includes(order.orderStatus)
+                      ? `<span class="muted">Seller action closed.</span>`
+                      : `<div class="admin-actions">
+                          <button class="secondary-button" type="button" data-sale-id="${order.id}" data-sale-status="delivering">Mark delivering</button>
+                          <button class="primary-button" type="button" data-sale-id="${order.id}" data-sale-status="complete">Mark complete</button>
+                        </div>`
+                  }
+                  <div class="admin-actions">
+                    <button class="secondary-button" type="button" data-open-order="${order.id}">Open transfer</button>
+                  </div>
+                </div>
+              `,
+            )
+            .join("") || `<p class="help-text">No sold orders yet.</p>`;
+      }
+
+      function renderOrderDetail() {
+        const order = state.activeOrder;
+        $("#order").classList.toggle("hidden", !order);
+        if (!order) return;
+
+        const paid = paymentConfirmed(order);
+        const delivering = order.orderStatus === "delivering";
+        const complete = order.orderStatus === "complete";
+        const waiting = order.orderStatus === "awaiting_payment";
+        const viewerRole = order.viewerRole || "buyer";
+        const itemCount = order.items.length;
+        const statusTone = complete ? "approved" : waiting ? "pending" : "fast";
+
+        $("#orderDetailEyebrow").textContent = viewerRole === "seller" ? "Seller transfer" : "Order room";
+        $("#orderDetailTitle").textContent = `Order #${order.id}`;
+        $("#orderDetailText").textContent =
+          viewerRole === "seller"
+            ? "This buyer's order is now in your seller queue. Keep delivery status updated from here."
+            : paid
+              ? "Payment is confirmed. The seller has the order and the transfer can move through delivery."
+              : "Payment is still being confirmed. Refresh the payment status if you just returned from Stripe.";
+        $("#detailOrderTotal").textContent = money(order.total);
+        $("#detailOrderMeta").textContent = `${order.paymentMethod} | ${order.paymentStatus} | ${order.orderStatus}`;
+        $("#detailItemCount").textContent = `${itemCount} item${itemCount === 1 ? "" : "s"}`;
+        $("#detailViewerRole").textContent = viewerRole;
+        $("#detailViewerRole").className = `tag ${statusTone}`;
+        $("#detailOrderItems").innerHTML = orderItemsMarkup(order);
+
+        $("#paymentLedgerRows").innerHTML = `
+          <div class="ledger-row">
+            <span class="muted">Order total</span>
+            <strong>${money(order.total)}</strong>
+          </div>
+          <div class="ledger-row">
+            <span class="muted">Payment method</span>
+            <strong>${escapeHTML(order.paymentMethod)}</strong>
+          </div>
+          <div class="ledger-row">
+            <span class="muted">Payment status</span>
+            <strong>${escapeHTML(order.paymentStatus)}</strong>
+          </div>
+          <div class="ledger-row">
+            <span class="muted">Transfer status</span>
+            <strong>${paid ? "Seller notified" : "Waiting for payment"}</strong>
+          </div>
+          <p class="help-text">
+            ${order.paymentMethod === "stripe" ? "Card payment is verified on the server. Seller payouts require Stripe Connect before real automatic transfers." : "This order uses local marketplace tracking for the payment state."}
+          </p>
+        `;
+
+        const steps = [
+          {
+            label: "Payment secured",
+            detail: paid ? "The order is paid and ready for seller delivery." : "Waiting on card/payment confirmation.",
+            done: paid,
+            active: waiting,
+          },
+          {
+            label: "Seller notified",
+            detail: paid ? "The seller can see this order in Sold orders." : "Seller transfer opens after payment confirmation.",
+            done: paid,
+            active: paid && order.orderStatus === "paid",
+          },
+          {
+            label: "Transfer in progress",
+            detail: delivering ? "Seller marked this order as delivering." : "Seller marks delivery when they start the transfer.",
+            done: delivering || complete,
+            active: delivering,
+          },
+          {
+            label: "Buyer confirms",
+            detail: complete ? "Order is complete." : "Buyer confirms receipt after delivery.",
+            done: complete,
+            active: paid && !complete && !waiting,
+          },
+        ];
+
+        $("#transferSteps").innerHTML = steps
+          .map(
+            (step, index) => `
+              <div class="${transferStepClass(step.done, step.active)}">
+                <span class="step-dot">${step.done ? "✓" : index + 1}</span>
+                <span>
+                  <strong>${escapeHTML(step.label)}</strong>
+                  <small class="muted">${escapeHTML(step.detail)}</small>
+                </span>
+              </div>
+            `,
+          )
+          .join("");
+
+        const actions = [
+          `<button class="secondary-button" type="button" data-order-action="refresh">Refresh payment</button>`,
+          `<a class="ghost-button" href="#account">Back to account</a>`,
+          `<a class="ghost-button" href="#market">Browse more</a>`,
+        ];
+
+        if (viewerRole === "buyer" && paid && !orderClosed(order)) {
+          actions.unshift(`<button class="primary-button" type="button" data-order-action="confirm">Confirm received</button>`);
+        }
+
+        if (viewerRole === "seller" && paid && !orderClosed(order)) {
+          actions.unshift(`<button class="primary-button" type="button" data-order-action="complete">Mark complete</button>`);
+          actions.unshift(`<button class="secondary-button" type="button" data-order-action="delivering">Mark delivering</button>`);
+        }
+
+        $("#orderActions").innerHTML = actions.join("");
+        renderOrderMessages();
+      }
+
+      function renderOrderMessages() {
+        $("#orderChatList").innerHTML =
+          state.activeMessages
+            .map(
+              (message) => `
+                <div class="chat-message">
+                  <strong>${escapeHTML(message.username)} <span class="muted">| ${escapeHTML(message.role)} | ${escapeHTML(message.createdAt)}</span></strong>
+                  <span>${escapeHTML(message.body)}</span>
+                </div>
+              `,
+            )
+            .join("") || `<p class="help-text">No messages yet. Start the handoff here.</p>`;
+      }
+
+      function statCard(label, value, helper = "") {
+        return `
+          <div class="seller-stat">
+            <span class="muted">${escapeHTML(label)}</span>
+            <strong>${escapeHTML(value)}</strong>
+            ${helper ? `<small class="muted">${escapeHTML(helper)}</small>` : ""}
+          </div>
+        `;
+      }
+
+      function renderListingDetail() {
+        const listing = state.activeListing;
+        if (!listing) return;
+        const seller = state.activeSeller;
+        $("#detailMedia").innerHTML = imageTag(listing);
+        $("#detailTitle").textContent = listing.title;
+        $("#detailPrice").textContent = money(listing.price);
+        $("#detailDescription").textContent = listing.description;
+        $("#detailTags").innerHTML = [listing.game, listing.category, listing.deliveryMethod, listing.status]
+          .map((tag) => `<span class="tag fast">${escapeHTML(tag)}</span>`)
+          .join("");
+        $("#detailSellerStats").innerHTML = seller
+          ? [
+              statCard("Seller", seller.username, seller.badges?.[0] || "Self-serve"),
+              statCard("Rating", seller.ratingCount ? `${seller.ratingAverage}/5` : "New", `${seller.ratingCount || 0} rating(s)`),
+              statCard("Completed", String(seller.completedOrders || 0), seller.responseTime || ""),
+            ].join("")
+          : "";
+      }
+
+      function renderSellerProfile() {
+        const seller = state.activeSeller;
+        if (!seller) return;
+        $("#sellerProfileName").textContent = seller.username;
+        $("#sellerBadges").innerHTML = (seller.badges || [])
+          .map((badge) => `<span class="tag approved">${escapeHTML(badge)}</span>`)
+          .join("");
+        $("#sellerStats").innerHTML = [
+          statCard("Rating", seller.ratingCount ? `${seller.ratingAverage}/5` : "New seller", `${seller.ratingCount || 0} rating(s)`),
+          statCard("Completed orders", String(seller.completedOrders || 0), "Confirmed deliveries"),
+          statCard("Active listings", String(seller.activeListings || 0), seller.responseTime || ""),
+        ].join("");
+        $("#sellerListings").innerHTML =
+          (seller.listings || [])
+            .map(
+              (item) => `
+                <article class="listing-card">
+                  <div class="listing-image">${imageTag(item)}<span class="listing-price">${money(item.price)}</span></div>
+                  <div class="listing-body">
+                    <div class="listing-meta">
+                      <span class="tag fast">${escapeHTML(item.game)}</span>
+                      <span class="tag">${escapeHTML(item.category)}</span>
+                    </div>
+                    <h3>${escapeHTML(item.title)}</h3>
+                    <p>${escapeHTML(item.description)}</p>
+                    <div class="card-actions">
+                      <button class="buy-button" type="button" data-add="${item.id}">Add</button>
+                      <button class="secondary-button" type="button" data-view="${item.id}">Details</button>
+                      <button class="secondary-button" type="button" data-seller="${item.sellerId}">Seller</button>
+                    </div>
+                  </div>
+                </article>
+              `,
+            )
+            .join("") || `<p class="help-text">This seller has no active listings.</p>`;
+      }
+
+      function renderMarketplace() {
+        const items = visibleListings();
+        $("#matchCount").textContent = items.length;
+        $("#resultSummary").textContent = `${items.length} listing${items.length === 1 ? "" : "s"} shown`;
+        $("#emptyState").classList.toggle("show", items.length === 0);
+
+        $("#listingGrid").innerHTML = items
+          .map(
+            (item) => `
+              <article class="listing-card">
+                <div class="listing-image">
+                  ${imageTag(item)}
+                  <span class="listing-price">${money(item.price)}</span>
+                </div>
+                <div class="listing-body">
+                  <div class="listing-meta">
+                    <span class="tag fast">${escapeHTML(item.game)}</span>
+                    <span class="tag">${escapeHTML(item.category)}</span>
+                    <span class="tag ${item.status}">${escapeHTML(item.deliveryMethod)}</span>
+                  </div>
+                  <h3>${escapeHTML(item.title)}</h3>
+                  <p>${escapeHTML(item.description)}</p>
+                  <div class="seller-line">
+                    <span>${escapeHTML(item.sellerName)}</span>
+                    <span>${escapeHTML(item.sellerRole)}</span>
+                  </div>
+                  <div class="card-actions">
+                    <button class="buy-button" type="button" data-add="${item.id}">Add</button>
+                    <button class="secondary-button" type="button" data-view="${item.id}">Details</button>
+                    <button class="secondary-button" type="button" data-seller="${item.sellerId}">Seller</button>
+                  </div>
+                </div>
+              </article>
+            `,
+          )
+          .join("");
+
+        const selected = selectedListing() || items[0] || state.listings[0];
+        if (selected) {
+          state.selectedId = selected.id;
+          $("#selectedImage").innerHTML = imageTag(selected);
+          $("#selectedTitle").textContent = selected.title;
+          $("#selectedMeta").textContent = `${selected.game} | ${selected.category} | ${selected.sellerName} | ${money(selected.price)}`;
+          $("#heroImage").src = selected.imageUrl;
+          $("#heroTitle").textContent = selected.title;
+          $("#heroSeller").textContent = selected.sellerName;
+          $("#heroPrice").textContent = money(selected.price);
+        }
+      }
+
+      function selectedListing() {
+        return state.listings.find((item) => item.id === state.selectedId);
+      }
+
+      function renderCart() {
+        const total = state.cart.reduce((sum, item) => sum + Number(item.price), 0);
+        const count = state.cart.length;
+        $("#orderTotal").textContent = money(total);
+        $("#checkoutSubtotal").textContent = money(total);
+        $("#checkoutDiscount").textContent = money(0);
+        $("#checkoutCount").textContent = `${count} item${count === 1 ? "" : "s"}`;
+        $("#metricTotal").textContent = money(total);
+        $("#metricItems").textContent = `${count} selected`;
+        $("#orderItems").innerHTML = count
+          ? state.cart
+              .map(
+                (item) => `
+                  <div class="order-line with-thumb">
+                    <span class="line-main">
+                      <span class="line-thumb">${imageTag(item)}</span>
+                      <span>${escapeHTML(item.title)}</span>
+                    </span>
+                    <strong>${money(item.price)}</strong>
+                  </div>
+                `,
+              )
+              .join("")
+          : `<div class="order-line"><span>No items yet</span><strong>$0.00</strong></div>`;
+      }
+
+      function renderSeller() {
+        $("#myListingCount").textContent = state.myListings.length;
+        $("#myListings").innerHTML =
+          state.myListings
+            .map(
+              (item) => `
+                <div class="my-item with-thumb">
+                  <span class="line-thumb">${imageTag(item)}</span>
+                  <div class="line-title">
+                    <div class="status-line">
+                      <span class="tag ${item.status}">${item.status}</span>
+                      <strong>${escapeHTML(item.title)}</strong>
+                    </div>
+                    <span class="muted">${escapeHTML(item.game)} | ${escapeHTML(item.category)} | ${money(item.price)}</span>
+                    ${item.moderationNote ? `<span class="muted">${escapeHTML(item.moderationNote)}</span>` : ""}
+                  </div>
+                </div>
+              `,
+            )
+            .join("") || `<p class="help-text">No listings yet.</p>`;
+      }
+
+      function renderAdmin() {
+        const live = state.listings.filter((item) => item.status === "approved").length;
+        $("#pendingCount").textContent = live;
+        $("#adminListings").innerHTML =
+          state.adminListings
+            .map(
+              (item) => `
+                <div class="admin-item with-thumb">
+                  <span class="line-thumb">${imageTag(item)}</span>
+                  <div class="line-title">
+                    <div class="status-line">
+                      <span class="tag ${item.status}">${item.status}</span>
+                      <strong>${escapeHTML(item.title)}</strong>
+                      <span class="muted">${escapeHTML(item.sellerName)} | ${money(item.price)}</span>
+                    </div>
+                    <span class="muted">${escapeHTML(item.game)} | ${escapeHTML(item.category)} | ${escapeHTML(item.deliveryMethod)}</span>
+                    <div class="admin-actions">
+                      <button class="primary-button" type="button" data-approve="${item.id}">Approve</button>
+                      <button class="danger-button" type="button" data-reject="${item.id}">Reject</button>
+                    </div>
+                  </div>
+                </div>
+              `,
+            )
+            .join("") || `<p class="help-text">No listings yet.</p>`;
+
+        $("#adminOrders").innerHTML =
+          state.adminOrders
+            .map(
+              (order) => `
+                <div class="admin-item">
+                  <strong>Order #${order.id} | ${money(order.total)} | ${escapeHTML(order.paymentStatus)}</strong>
+                  <span class="muted">${escapeHTML(order.buyerName)} | ${escapeHTML(order.orderStatus)} | ${order.items.length} item(s) | refunded ${money(order.refunded || 0)}</span>
+                  <div class="admin-actions">
+                    <button class="secondary-button" type="button" data-refund="${order.id}">Refund remaining</button>
+                  </div>
+                </div>
+              `,
+            )
+            .join("") || `<p class="help-text">No orders yet.</p>`;
+
+        $("#adminDisputes").innerHTML =
+          state.adminDisputes
+            .map(
+              (dispute) => `
+                <div class="admin-item">
+                  <strong>${escapeHTML(dispute.providerDisputeId)} | ${money(dispute.amount)} | ${escapeHTML(dispute.status)}</strong>
+                  <span class="muted">Order #${dispute.orderId || "unknown"} | ${escapeHTML(dispute.reason || "no reason")} | due ${escapeHTML(dispute.evidenceDueAt || "n/a")}</span>
+                </div>
+              `,
+            )
+            .join("") || `<p class="help-text">No disputes yet.</p>`;
+      }
+
+      function syncButtons() {
+        document.querySelectorAll("[data-category]").forEach((button) => button.classList.toggle("active", button.dataset.category === state.category));
+        document.querySelectorAll("[data-game]").forEach((button) => button.classList.toggle("active", button.dataset.game === state.game));
+        document.querySelectorAll("[data-payment-card]").forEach((button) => {
+          button.classList.toggle("active", button.dataset.paymentCard === $("#paymentMethod").value);
+        });
+      }
+
+      function render() {
+        $("#priceValue").textContent = state.maxPrice >= 100 ? "$100+" : `$${state.maxPrice}`;
+        $("#stripeOption").disabled = !state.config.stripeConfigured;
+        $("#stripeOption").textContent = state.config.stripeConfigured ? "Stripe Checkout" : "Stripe Checkout (.env key needed)";
+        $("#stripeCardText").textContent = state.config.stripeConfigured
+          ? "Secure hosted card checkout"
+          : "Add STRIPE_SECRET_KEY in .env";
+        document.querySelector('[data-payment-card="stripe"]').disabled = !state.config.stripeConfigured;
+        syncButtons();
+        renderAccount();
+        renderAccountOrders();
+        renderOrderDetail();
+        renderListingDetail();
+        renderSellerProfile();
+        renderMarketplace();
+        renderCart();
+        renderSeller();
+        renderAdmin();
+        routePage();
+      }
+
+      const pageAliases = {
+        "": "home",
+        home: "home",
+        categories: "home",
+        market: "market",
+        buy: "market",
+        checkout: "checkout",
+        orders: "checkout",
+        listing: "listing",
+        detail: "listing",
+        seller: "seller",
+        profile: "seller",
+        sell: "sell",
+        account: "account",
+        admin: "admin",
+        adminPanel: "admin",
+        order: "order",
+      };
+
+      function currentPageName() {
+        const raw = location.hash.replace("#", "").trim();
+        return pageAliases[raw] || "home";
+      }
+
+      function routePage() {
+        let page = currentPageName();
+        if (page === "order" && !state.activeOrder) page = "account";
+        if (page === "listing" && !state.activeListing) page = "market";
+        if (page === "seller" && !state.activeSeller) page = "market";
+        if (page === "admin" && state.user?.role !== "admin") page = state.user ? "account" : "home";
+        document.querySelectorAll("[data-page]").forEach((section) => {
+          section.classList.toggle("page-hidden", section.dataset.page !== page);
+        });
+        document.querySelectorAll("[data-nav-page]").forEach((link) => {
+          const categoryMatch = link.dataset.category && link.dataset.category === state.category;
+          const pageMatch = link.dataset.navPage === page && !link.dataset.category;
+          link.classList.toggle("active", Boolean(pageMatch || (page === "market" && categoryMatch)));
+        });
+      }
+
+      async function fetchOrder(orderId, options = {}) {
+        if (options.syncStripe) {
+          await api(`/api/orders/${orderId}/sync-stripe`, { method: "POST", body: "{}" });
+        }
+        const data = await api(`/api/orders/${orderId}`);
+        state.activeOrder = data.order;
+        state.activeMessages = (await api(`/api/orders/${orderId}/messages`)).messages;
+        window.localStorage.setItem("lootxhub:lastOrderId", String(orderId));
+        return data.order;
+      }
+
+      async function openOrder(orderId, options = {}) {
+        const order = await fetchOrder(orderId, options);
+        render();
+        location.hash = "#order";
+        routePage();
+        return order;
+      }
+
+      async function openListing(listingId) {
+        const data = await api(`/api/listings/${listingId}`);
+        state.activeListing = data.listing;
+        state.activeSeller = data.seller;
+        window.localStorage.setItem("lootxhub:lastListingId", String(listingId));
+        render();
+        location.hash = "#listing";
+        routePage();
+      }
+
+      async function openSeller(sellerId) {
+        const data = await api(`/api/sellers/${sellerId}`);
+        state.activeSeller = data.seller;
+        window.localStorage.setItem("lootxhub:lastSellerId", String(sellerId));
+        render();
+        location.hash = "#seller";
+        routePage();
+      }
+
+      async function hydrateCheckoutReturn() {
+        const params = new URLSearchParams(location.search);
+        const checkout = params.get("checkout");
+        const orderId = Number(params.get("order_id"));
+
+        if (!checkout || !orderId || state.checkoutReturnHandled) return;
+        state.checkoutReturnHandled = true;
+
+        if (!state.user) {
+          location.hash = "#account";
+          toast("Sign in to view that order.");
+          return;
+        }
+
+        if (checkout === "success") {
+          try {
+            await fetchOrder(orderId, { syncStripe: true });
+          } catch (error) {
+            await fetchOrder(orderId);
+            toast(error.message);
+          }
+          history.replaceState(null, "", `${location.pathname}#order`);
+          state.cart = [];
+          requestAnimationFrame(() => $("#order").scrollIntoView({ behavior: "smooth", block: "start" }));
+          toast(`Order #${orderId} opened.`);
+          return;
+        }
+
+        if (checkout === "cancelled") {
+          history.replaceState(null, "", `${location.pathname}#orders`);
+          toast("Checkout was cancelled.");
+        }
+      }
+
+      async function loadAll() {
+        try {
+          state.config = await api("/api/config");
+          const me = await api("/api/me");
+          state.user = me.user;
+          const listingData = await api("/api/listings?mine=1");
+          state.listings = listingData.listings;
+          state.selectedId ||= state.listings[0]?.id || null;
+          if (state.user) {
+            const [myListingsData, myOrdersData, sellerOrdersData, walletData] = await Promise.all([
+              api("/api/my/listings"),
+              api("/api/my/orders"),
+              api("/api/my/sales"),
+              api("/api/my/wallet"),
+            ]);
+            state.myListings = myListingsData.listings;
+            state.myOrders = myOrdersData.orders.filter(Boolean);
+            state.sellerOrders = sellerOrdersData.orders.filter(Boolean);
+            state.wallet = walletData.wallet;
+          } else {
+            state.myListings = [];
+            state.myOrders = [];
+            state.sellerOrders = [];
+            state.wallet = null;
+          }
+          if (state.user?.role === "admin") {
+            state.adminListings = (await api("/api/admin/listings")).listings;
+            state.adminOrders = (await api("/api/admin/orders")).orders.filter(Boolean);
+            state.adminDisputes = (await api("/api/admin/disputes")).disputes;
+          } else {
+            state.adminListings = [];
+            state.adminOrders = [];
+            state.adminDisputes = [];
+          }
+          const pageName = currentPageName();
+          if (state.activeOrder && state.user) {
+            await fetchOrder(state.activeOrder.id);
+          }
+          if (!state.activeOrder && state.user && pageName === "order") {
+            const lastOrderId = Number(window.localStorage.getItem("lootxhub:lastOrderId"));
+            if (lastOrderId) await fetchOrder(lastOrderId);
+          }
+          if (!state.activeListing && pageName === "listing") {
+            const lastListingId = Number(window.localStorage.getItem("lootxhub:lastListingId"));
+            if (lastListingId) {
+              try {
+                const data = await api(`/api/listings/${lastListingId}`);
+                state.activeListing = data.listing;
+                state.activeSeller = data.seller;
+              } catch {
+                window.localStorage.removeItem("lootxhub:lastListingId");
+              }
+            }
+          }
+          if (!state.activeSeller && pageName === "seller") {
+            const lastSellerId = Number(window.localStorage.getItem("lootxhub:lastSellerId"));
+            if (lastSellerId) {
+              try {
+                const data = await api(`/api/sellers/${lastSellerId}`);
+                state.activeSeller = data.seller;
+              } catch {
+                window.localStorage.removeItem("lootxhub:lastSellerId");
+              }
+            }
+          }
+          await hydrateCheckoutReturn();
+          render();
+        } catch (error) {
+          toast(error.message);
+        }
+      }
+
+      function requireAccount() {
+        if (state.user) return true;
+        toast("Sign in or register first.");
+        location.hash = "#account";
+        routePage();
+        document.querySelector("#account").scrollIntoView({ behavior: "smooth" });
+        return false;
+      }
+
+      function submitGlobalSearch() {
+        state.query = $("#globalSearch").value.trim();
+        state.category = $("#globalSearchCategory").value;
+        location.hash = "#market";
+        render();
+      }
+
+      async function fileToDataUrl(file) {
+        if (!file) return "";
+        if (!file.type.startsWith("image/")) throw new Error("Upload an image file.");
+        if (file.size > 3_000_000) throw new Error("Use an image under 3 MB.");
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error("Could not read image."));
+          reader.readAsDataURL(file);
+        });
+      }
+
+      document.querySelectorAll("[data-category]").forEach((button) => {
+        button.addEventListener("click", () => {
+          state.category = button.dataset.category;
+          $("#globalSearchCategory").value = state.category;
+          render();
+          if (button.closest("#categories") || button.closest(".top-nav")) {
+            location.hash = "#market";
+          }
+        });
+      });
+
+      document.querySelectorAll("[data-game]").forEach((button) => {
+        button.addEventListener("click", () => {
+          state.game = button.dataset.game;
+          $("#gameFilter").value = state.game;
+          render();
+          if (button.closest(".home-finder")) {
+            location.hash = "#market";
+          }
+        });
+      });
+
+      $("#globalSearch").addEventListener("input", (event) => {
+        state.query = event.target.value.trim();
+        renderMarketplace();
+      });
+
+      $("#globalSearch").addEventListener("keydown", (event) => {
+        if (event.key === "Enter") submitGlobalSearch();
+      });
+
+      $("#globalSearchSubmit").addEventListener("click", submitGlobalSearch);
+
+      $("#globalSearchCategory").addEventListener("change", (event) => {
+        state.category = event.target.value;
+        location.hash = "#market";
+        render();
+      });
+
+      $("#homeSearch").addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") return;
+        state.query = event.target.value.trim();
+        $("#globalSearch").value = state.query;
+        $("#globalSearchCategory").value = "All";
+        state.category = "All";
+        location.hash = "#market";
+        render();
+      });
+
+      $("#accountOrdersPanel").addEventListener("click", async (event) => {
+        const target = event.target.closest("[data-open-order]");
+        if (!target) return;
+        try {
+          await openOrder(Number(target.dataset.openOrder));
+        } catch (error) {
+          toast(error.message);
+        }
+      });
+
+      $("#order").addEventListener("click", async (event) => {
+        const target = event.target.closest("[data-order-action]");
+        if (!target || !state.activeOrder) return;
+        const orderId = state.activeOrder.id;
+        const action = target.dataset.orderAction;
+
+        try {
+          if (action === "refresh") {
+            await openOrder(orderId, { syncStripe: state.activeOrder.paymentMethod === "stripe" });
+            toast("Order refreshed.");
+            return;
+          }
+
+          if (action === "confirm") {
+            await api(`/api/orders/${orderId}/confirm`, { method: "POST", body: "{}" });
+            await loadAll();
+            await openOrder(orderId);
+            toast("Order marked complete.");
+            return;
+          }
+
+          if (action === "delivering" || action === "complete") {
+            await api(`/api/my/sales/${orderId}`, {
+              method: "PATCH",
+              body: JSON.stringify({ orderStatus: action }),
+            });
+            await loadAll();
+            await openOrder(orderId);
+            toast(`Transfer marked ${action}.`);
+          }
+        } catch (error) {
+          toast(error.message);
+        }
+      });
+
+      $("#orderMessageForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (!state.activeOrder) return;
+        try {
+          const data = await api(`/api/orders/${state.activeOrder.id}/messages`, {
+            method: "POST",
+            body: JSON.stringify({ message: $("#orderMessageText").value }),
+          });
+          state.activeMessages = data.messages;
+          $("#orderMessageText").value = "";
+          renderOrderMessages();
+          toast("Message sent.");
+        } catch (error) {
+          toast(error.message);
+        }
+      });
+
+      $("#submitRating").addEventListener("click", async () => {
+        if (!state.activeOrder) return;
+        try {
+          await api(`/api/orders/${state.activeOrder.id}/ratings`, {
+            method: "POST",
+            body: JSON.stringify({ score: $("#ratingScore").value, comment: $("#ratingComment").value }),
+          });
+          $("#ratingComment").value = "";
+          await openOrder(state.activeOrder.id);
+          toast("Rating saved.");
+        } catch (error) {
+          toast(error.message);
+        }
+      });
+
+      $("#openDispute").addEventListener("click", async () => {
+        if (!state.activeOrder) return;
+        try {
+          const data = await api(`/api/orders/${state.activeOrder.id}/dispute`, {
+            method: "POST",
+            body: JSON.stringify({ reason: $("#disputeReason").value }),
+          });
+          state.activeOrder = data.order;
+          state.activeMessages = data.messages;
+          $("#disputeReason").value = "";
+          render();
+          toast("Transaction held for review.");
+        } catch (error) {
+          toast(error.message);
+        }
+      });
+
+      $("#gameFilter").addEventListener("change", (event) => {
+        state.game = event.target.value;
+        render();
+      });
+
+      $("#deliveryFilter").addEventListener("change", (event) => {
+        state.delivery = event.target.value;
+        renderMarketplace();
+      });
+
+      $("#priceRange").addEventListener("input", (event) => {
+        state.maxPrice = Number(event.target.value);
+        render();
+      });
+
+      $("#sortSelect").addEventListener("change", (event) => {
+        state.sort = event.target.value;
+        renderMarketplace();
+      });
+
+      $("#paymentCards").addEventListener("click", (event) => {
+        const card = event.target.closest("[data-payment-card]");
+        if (!card || card.disabled) return;
+        $("#paymentMethod").value = card.dataset.paymentCard;
+        syncButtons();
+      });
+
+      $("#resetFilters").addEventListener("click", () => {
+        state.query = "";
+        state.category = "All";
+        state.game = "All";
+        state.delivery = "All";
+        state.maxPrice = 100;
+        state.sort = "recommended";
+        $("#globalSearch").value = "";
+        $("#globalSearchCategory").value = "All";
+        $("#gameFilter").value = "All";
+        $("#deliveryFilter").value = "All";
+        $("#priceRange").value = "100";
+        $("#sortSelect").value = "recommended";
+        render();
+      });
+
+      async function handleListingAction(event) {
+        const add = event.target.closest("[data-add]");
+        const view = event.target.closest("[data-view]");
+        const seller = event.target.closest("[data-seller]");
+        if (view) {
+          try {
+            await openListing(Number(view.dataset.view));
+          } catch (error) {
+            toast(error.message);
+          }
+          return;
+        }
+        if (seller) {
+          try {
+            await openSeller(Number(seller.dataset.seller));
+          } catch (error) {
+            toast(error.message);
+          }
+          return;
+        }
+        if (add) {
+          if (!requireAccount()) return;
+          const item = state.listings.find((listing) => listing.id === Number(add.dataset.add));
+          if (!item) return;
+          state.cart.push(item);
+          state.selectedId = item.id;
+          render();
+          location.hash = "#checkout";
+          toast(`${item.title} added to checkout.`);
+        }
+      }
+
+      $("#listingGrid").addEventListener("click", handleListingAction);
+      $("#sellerListings").addEventListener("click", handleListingAction);
+
+      $("#selectedAdd").addEventListener("click", () => {
+        if (!requireAccount()) return;
+        const item = selectedListing();
+        if (!item) return;
+        state.cart.push(item);
+        render();
+        location.hash = "#checkout";
+      });
+
+      $("#detailBuyButton").addEventListener("click", () => {
+        if (!requireAccount()) return;
+        if (!state.activeListing) return;
+        state.cart.push(state.activeListing);
+        state.selectedId = state.activeListing.id;
+        render();
+        location.hash = "#checkout";
+        toast(`${state.activeListing.title} added to checkout.`);
+      });
+
+      $("#detailSellerButton").addEventListener("click", async () => {
+        if (!state.activeListing) return;
+        try {
+          await openSeller(state.activeListing.sellerId);
+        } catch (error) {
+          toast(error.message);
+        }
+      });
+
+      $("#checkoutButton").addEventListener("click", async () => {
+        if (!requireAccount()) return;
+        try {
+          const order = await api("/api/checkout", {
+            method: "POST",
+            body: JSON.stringify({
+              listingIds: state.cart.map((item) => item.id),
+              paymentMethod: $("#paymentMethod").value,
+            }),
+          });
+          if (order.checkoutUrl) {
+            location.href = order.checkoutUrl;
+            return;
+          }
+          state.cart = [];
+          await loadAll();
+          await openOrder(order.order.id);
+          toast(`Order #${order.order.id} created and sent to the seller.`);
+        } catch (error) {
+          toast(error.message);
+        }
+      });
+
+      $("#showLogin").addEventListener("click", () => {
+        $("#loginForm").classList.remove("hidden");
+        $("#registerForm").classList.add("hidden");
+        $("#showLogin").classList.add("active");
+        $("#showRegister").classList.remove("active");
+      });
+
+      $("#showRegister").addEventListener("click", () => {
+        $("#registerForm").classList.remove("hidden");
+        $("#loginForm").classList.add("hidden");
+        $("#showRegister").classList.add("active");
+        $("#showLogin").classList.remove("active");
+      });
+
+      $("#loginForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        try {
+          await api("/api/auth/login", {
+            method: "POST",
+            body: JSON.stringify({ email: $("#loginEmail").value, password: $("#loginPassword").value }),
+          });
+          await loadAll();
+          toast("Signed in.");
+        } catch (error) {
+          toast(error.message);
+        }
+      });
+
+      $("#registerForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        try {
+          await api("/api/auth/register", {
+            method: "POST",
+            body: JSON.stringify({
+              username: $("#registerUsername").value,
+              email: $("#registerEmail").value,
+              password: $("#registerPassword").value,
+            }),
+          });
+          event.target.reset();
+          await loadAll();
+          toast("Account created.");
+        } catch (error) {
+          toast(error.message);
+        }
+      });
+
+      $("#logoutButton").addEventListener("click", async () => {
+        await api("/api/auth/logout", { method: "POST", body: "{}" });
+        state.user = null;
+        state.myListings = [];
+        state.myOrders = [];
+        state.sellerOrders = [];
+        state.wallet = null;
+        state.activeOrder = null;
+        state.activeMessages = [];
+        window.localStorage.removeItem("lootxhub:lastOrderId");
+        state.adminListings = [];
+        state.adminOrders = [];
+        state.adminDisputes = [];
+        render();
+        toast("Signed out.");
+      });
+
+      $("#listingForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (!requireAccount()) return;
+        try {
+          const imageDataUrl = await fileToDataUrl($("#listingImageFile").files[0]);
+          await api("/api/listings", {
+            method: "POST",
+            body: JSON.stringify({
+              title: $("#listingTitle").value,
+              game: $("#listingGame").value,
+              category: $("#listingCategory").value,
+              description: $("#listingDescription").value,
+              price: $("#listingPrice").value,
+              deliveryMethod: $("#listingDelivery").value,
+              imageUrl: $("#listingImageUrl").value,
+              imageDataUrl,
+            }),
+          });
+          event.target.reset();
+          await loadAll();
+          location.hash = "#market";
+          toast("Listing published live.");
+        } catch (error) {
+          toast(error.message);
+        }
+      });
+
+      $("#adminListings").addEventListener("click", async (event) => {
+        const approve = event.target.closest("[data-approve]");
+        const reject = event.target.closest("[data-reject]");
+        if (!approve && !reject) return;
+        try {
+          await api(`/api/admin/listings/${approve?.dataset.approve || reject?.dataset.reject}`, {
+            method: "PATCH",
+            body: JSON.stringify({
+              status: approve ? "approved" : "rejected",
+              moderationNote: approve ? "" : "Rejected by admin.",
+            }),
+          });
+          await loadAll();
+          toast(approve ? "Listing approved." : "Listing rejected.");
+        } catch (error) {
+          toast(error.message);
+        }
+      });
+
+      $("#adminOrders").addEventListener("click", async (event) => {
+        const refund = event.target.closest("[data-refund]");
+        if (!refund) return;
+        try {
+          const result = await api(`/api/admin/orders/${refund.dataset.refund}/refund`, {
+            method: "POST",
+            body: JSON.stringify({ reason: "requested_by_customer" }),
+          });
+          await loadAll();
+          toast(`Refund recorded: ${money(result.refund.amount)}`);
+        } catch (error) {
+          toast(error.message);
+        }
+      });
+
+      $("#refreshAdmin").addEventListener("click", loadAll);
+
+      $("#sellerOrdersList").addEventListener("click", async (event) => {
+        const action = event.target.closest("[data-sale-status]");
+        if (!action) return;
+        try {
+          await api(`/api/my/sales/${action.dataset.saleId}`, {
+            method: "PATCH",
+            body: JSON.stringify({ orderStatus: action.dataset.saleStatus }),
+          });
+          await loadAll();
+          toast(`Seller order marked ${action.dataset.saleStatus}.`);
+        } catch (error) {
+          toast(error.message);
+        }
+      });
+
+      window.addEventListener("hashchange", () => {
+        routePage();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+
+      if (location.protocol === "file:") {
+        const localUrl = `http://127.0.0.1:5173/${location.hash || ""}`;
+        const safeLocalUrl = escapeHTML(localUrl);
+        const serverWarning = $("#serverWarning");
+        serverWarning.innerHTML = `This app needs the local server for sign in, listings, and checkout. Redirecting to <a href="${safeLocalUrl}">${safeLocalUrl}</a>...`;
+        serverWarning.classList.add("show");
+        window.setTimeout(() => {
+          location.href = localUrl;
+        }, 700);
+      } else {
+        loadAll();
+      }
+    </script>
+  </body>
 </html>
