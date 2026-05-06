@@ -19,6 +19,7 @@ const stripeSecretKey = process.env.STRIPE_SECRET_KEY || "";
 const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
 const stripeCurrency = (process.env.STRIPE_CURRENCY || "usd").toLowerCase();
 const publicAppUrl = process.env.APP_URL || "";
+const platformFeePercent = Math.min(25, Math.max(0, Number(process.env.PLATFORM_FEE_PERCENT || 8)));
 
 fs.mkdirSync(dataDir, { recursive: true });
 fs.mkdirSync(uploadDir, { recursive: true });
@@ -33,6 +34,12 @@ db.exec(`
     password_hash TEXT NOT NULL,
     role TEXT NOT NULL DEFAULT 'buyer',
     seller_status TEXT NOT NULL DEFAULT 'active',
+    seller_tier TEXT NOT NULL DEFAULT 'New Seller',
+    stripe_account_id TEXT,
+    stripe_onboarding_status TEXT NOT NULL DEFAULT 'not_started',
+    stripe_charges_enabled INTEGER NOT NULL DEFAULT 0,
+    stripe_payouts_enabled INTEGER NOT NULL DEFAULT 0,
+    email_verified INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -52,6 +59,11 @@ db.exec(`
     description TEXT NOT NULL,
     price_cents INTEGER NOT NULL,
     delivery_method TEXT NOT NULL,
+    delivery_window TEXT NOT NULL DEFAULT '24 hours',
+    stock INTEGER NOT NULL DEFAULT 1,
+    region TEXT NOT NULL DEFAULT 'Global',
+    platform TEXT NOT NULL DEFAULT 'All platforms',
+    warranty_days INTEGER NOT NULL DEFAULT 0,
     image_url TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'pending',
     moderation_note TEXT,
@@ -63,6 +75,7 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     buyer_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     total_cents INTEGER NOT NULL,
+    platform_fee_cents INTEGER NOT NULL DEFAULT 0,
     payment_method TEXT NOT NULL,
     payment_status TEXT NOT NULL DEFAULT 'pending',
     order_status TEXT NOT NULL DEFAULT 'new',
@@ -75,7 +88,8 @@ db.exec(`
     listing_id INTEGER NOT NULL REFERENCES listings(id),
     seller_id INTEGER NOT NULL REFERENCES users(id),
     title TEXT NOT NULL,
-    price_cents INTEGER NOT NULL
+    price_cents INTEGER NOT NULL,
+    platform_fee_cents INTEGER NOT NULL DEFAULT 0
   );
 
   CREATE TABLE IF NOT EXISTS payment_events (
@@ -110,6 +124,9 @@ db.exec(`
     reason TEXT,
     evidence_due_at TEXT,
     raw_payload TEXT,
+    resolution TEXT,
+    resolved_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    resolved_at TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
@@ -119,6 +136,8 @@ db.exec(`
     order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     body TEXT NOT NULL,
+    message_type TEXT NOT NULL DEFAULT 'message',
+    attachment_url TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -132,15 +151,59 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(order_id, rater_id, rated_user_id)
   );
+
+  CREATE TABLE IF NOT EXISTS favorites (
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    listing_id INTEGER NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, listing_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    body TEXT NOT NULL,
+    url TEXT,
+    read_at TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    token_hash TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    expires_at TEXT NOT NULL,
+    used_at TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 ensureColumn("users", "seller_status", "TEXT NOT NULL DEFAULT 'active'");
+ensureColumn("users", "seller_tier", "TEXT NOT NULL DEFAULT 'New Seller'");
+ensureColumn("users", "stripe_account_id", "TEXT");
+ensureColumn("users", "stripe_onboarding_status", "TEXT NOT NULL DEFAULT 'not_started'");
+ensureColumn("users", "stripe_charges_enabled", "INTEGER NOT NULL DEFAULT 0");
+ensureColumn("users", "stripe_payouts_enabled", "INTEGER NOT NULL DEFAULT 0");
+ensureColumn("users", "email_verified", "INTEGER NOT NULL DEFAULT 0");
+ensureColumn("listings", "delivery_window", "TEXT NOT NULL DEFAULT '24 hours'");
+ensureColumn("listings", "stock", "INTEGER NOT NULL DEFAULT 1");
+ensureColumn("listings", "region", "TEXT NOT NULL DEFAULT 'Global'");
+ensureColumn("listings", "platform", "TEXT NOT NULL DEFAULT 'All platforms'");
+ensureColumn("listings", "warranty_days", "INTEGER NOT NULL DEFAULT 0");
 ensureColumn("orders", "provider", "TEXT");
 ensureColumn("orders", "provider_session_id", "TEXT");
 ensureColumn("orders", "provider_payment_intent", "TEXT");
 ensureColumn("orders", "provider_charge_id", "TEXT");
 ensureColumn("orders", "refunded_cents", "INTEGER NOT NULL DEFAULT 0");
+ensureColumn("orders", "platform_fee_cents", "INTEGER NOT NULL DEFAULT 0");
 ensureColumn("order_items", "image_url", "TEXT");
+ensureColumn("order_items", "platform_fee_cents", "INTEGER NOT NULL DEFAULT 0");
+ensureColumn("order_messages", "message_type", "TEXT NOT NULL DEFAULT 'message'");
+ensureColumn("order_messages", "attachment_url", "TEXT");
+ensureColumn("disputes", "resolution", "TEXT");
+ensureColumn("disputes", "resolved_by", "INTEGER REFERENCES users(id) ON DELETE SET NULL");
+ensureColumn("disputes", "resolved_at", "TEXT");
 
 seedAdmin();
 seedListings();
@@ -185,6 +248,7 @@ async function routeApi(req, res, requestUrl, method) {
       stripeConfigured: Boolean(stripeSecretKey),
       stripeWebhookConfigured: Boolean(stripeWebhookSecret),
       stripeCurrency,
+      platformFeePercent,
     });
     return;
   }
@@ -249,6 +313,140 @@ async function routeApi(req, res, requestUrl, method) {
     }
     setCookie(res, "lx_session", "", "Max-Age=0; Path=/; HttpOnly; SameSite=Lax");
     sendJson(res, 200, { ok: true });
+    return;
+  }
+
+  if (method === "POST" && requestUrl.pathname === "/api/auth/change-password") {
+    requireUser(res, user);
+    if (!user) return;
+    const body = await readJson(req);
+    const currentPassword = String(body.currentPassword || "");
+    const newPassword = String(body.newPassword || "");
+    const found = db.prepare("SELECT * FROM users WHERE id = ?").get(user.id);
+    if (!found || !verifyPassword(currentPassword, found.password_hash)) {
+      sendJson(res, 401, { error: "Current password is incorrect." });
+      return;
+    }
+    if (newPassword.length < 10) {
+      sendJson(res, 400, { error: "Use a new password with at least 10 characters." });
+      return;
+    }
+    db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(hashPassword(newPassword), user.id);
+    createNotification(user.id, "security", "Password changed", "Your LootXHub password was updated.", "#account");
+    sendJson(res, 200, { ok: true });
+    return;
+  }
+
+  if (method === "POST" && requestUrl.pathname === "/api/auth/password-reset/request") {
+    const body = await readJson(req);
+    const email = cleanEmail(body.email);
+    const found = db.prepare("SELECT id FROM users WHERE email = ?").get(email);
+    let devResetToken = "";
+    if (found) {
+      const token = crypto.randomBytes(24).toString("hex");
+      const expires = db.prepare("SELECT datetime('now', '+30 minutes') AS expires").get().expires;
+      db.prepare("INSERT INTO password_reset_tokens (token_hash, user_id, expires_at) VALUES (?, ?, ?)").run(
+        tokenHash(token),
+        found.id,
+        expires,
+      );
+      createNotification(found.id, "security", "Password reset requested", "A password reset token was created.", "#account");
+      devResetToken = token;
+    }
+    sendJson(res, 200, {
+      ok: true,
+      message: "If that email exists, a reset token has been created.",
+      devResetToken,
+    });
+    return;
+  }
+
+  if (method === "POST" && requestUrl.pathname === "/api/auth/password-reset/confirm") {
+    const body = await readJson(req);
+    const token = cleanText(body.token || "", 200);
+    const newPassword = String(body.newPassword || "");
+    if (newPassword.length < 10) {
+      sendJson(res, 400, { error: "Use a new password with at least 10 characters." });
+      return;
+    }
+    const reset = db
+      .prepare(
+        "SELECT * FROM password_reset_tokens WHERE token_hash = ? AND used_at IS NULL AND expires_at > CURRENT_TIMESTAMP",
+      )
+      .get(tokenHash(token));
+    if (!reset) {
+      sendJson(res, 400, { error: "Reset token is invalid or expired." });
+      return;
+    }
+    db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(hashPassword(newPassword), reset.user_id);
+    db.prepare("UPDATE password_reset_tokens SET used_at = CURRENT_TIMESTAMP WHERE token_hash = ?").run(reset.token_hash);
+    createNotification(reset.user_id, "security", "Password reset complete", "Your password was reset successfully.", "#account");
+    sendJson(res, 200, { ok: true });
+    return;
+  }
+
+  if (method === "GET" && requestUrl.pathname === "/api/my/notifications") {
+    requireUser(res, user);
+    if (!user) return;
+    const rows = db
+      .prepare("SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 30")
+      .all(user.id);
+    sendJson(res, 200, { notifications: rows.map(formatNotification) });
+    return;
+  }
+
+  if (method === "POST" && requestUrl.pathname === "/api/my/notifications/read-all") {
+    requireUser(res, user);
+    if (!user) return;
+    db.prepare("UPDATE notifications SET read_at = CURRENT_TIMESTAMP WHERE user_id = ? AND read_at IS NULL").run(user.id);
+    sendJson(res, 200, { ok: true });
+    return;
+  }
+
+  const notificationMatch = requestUrl.pathname.match(/^\/api\/my\/notifications\/(\d+)$/);
+  if (method === "PATCH" && notificationMatch) {
+    requireUser(res, user);
+    if (!user) return;
+    db.prepare("UPDATE notifications SET read_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?").run(
+      Number(notificationMatch[1]),
+      user.id,
+    );
+    sendJson(res, 200, { ok: true });
+    return;
+  }
+
+  if (method === "GET" && requestUrl.pathname === "/api/connect/status") {
+    requireUser(res, user);
+    if (!user) return;
+    if (stripeSecretKey && user.stripe_account_id) {
+      try {
+        await refreshStripeAccountStatus(user.id, user.stripe_account_id);
+      } catch (error) {
+        console.warn(`Could not refresh Stripe account ${user.stripe_account_id}: ${error.message}`);
+      }
+    }
+    const fresh = db.prepare("SELECT * FROM users WHERE id = ?").get(user.id);
+    sendJson(res, 200, { connect: sellerConnectStatus(fresh) });
+    return;
+  }
+
+  if (method === "POST" && requestUrl.pathname === "/api/connect/onboard") {
+    requireUser(res, user);
+    if (!user) return;
+    if (!stripeSecretKey) {
+      sendJson(res, 400, { error: "Stripe is not configured. Add STRIPE_SECRET_KEY first." });
+      return;
+    }
+    try {
+      const fresh = db.prepare("SELECT * FROM users WHERE id = ?").get(user.id);
+      const accountId = fresh.stripe_account_id || (await createStripeConnectedAccount(fresh));
+      const link = await createStripeAccountLink(req, accountId);
+      await refreshStripeAccountStatus(user.id, accountId);
+      createNotification(user.id, "seller", "Stripe onboarding started", "Finish Stripe onboarding to unlock real seller payouts.", "#account");
+      sendJson(res, 200, { url: link.url, connect: sellerConnectStatus(db.prepare("SELECT * FROM users WHERE id = ?").get(user.id)) });
+    } catch (error) {
+      sendJson(res, 502, { error: `Stripe Connect onboarding failed: ${error.message}` });
+    }
     return;
   }
 
@@ -320,8 +518,8 @@ async function routeApi(req, res, requestUrl, method) {
 
     db.prepare(
       `INSERT INTO listings
-        (seller_id, title, game, category, description, price_cents, delivery_method, image_url, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'approved')`,
+        (seller_id, title, game, category, description, price_cents, delivery_method, delivery_window, stock, region, platform, warranty_days, image_url, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved')`,
     ).run(
       user.id,
       listing.title,
@@ -330,6 +528,11 @@ async function routeApi(req, res, requestUrl, method) {
       listing.description,
       listing.priceCents,
       listing.deliveryMethod,
+      listing.deliveryWindow,
+      listing.stock,
+      listing.region,
+      listing.platform,
+      listing.warrantyDays,
       listing.imageUrl,
     );
 
@@ -367,6 +570,43 @@ async function routeApi(req, res, requestUrl, method) {
     return;
   }
 
+  if (method === "GET" && requestUrl.pathname === "/api/my/favorites") {
+    requireUser(res, user);
+    if (!user) return;
+    const rows = db
+      .prepare(
+        `SELECT listings.*, users.username AS seller_name, users.role AS seller_role
+         FROM favorites
+         JOIN listings ON listings.id = favorites.listing_id
+         JOIN users ON users.id = listings.seller_id
+         WHERE favorites.user_id = ? AND listings.status = 'approved'
+         ORDER BY favorites.created_at DESC`,
+      )
+      .all(user.id);
+    sendJson(res, 200, { listingIds: rows.map((row) => row.id), listings: rows.map(formatListing) });
+    return;
+  }
+
+  const favoriteMatch = requestUrl.pathname.match(/^\/api\/favorites\/(\d+)$/);
+  if ((method === "POST" || method === "DELETE") && favoriteMatch) {
+    requireUser(res, user);
+    if (!user) return;
+    const listingId = Number(favoriteMatch[1]);
+    const listing = db.prepare("SELECT id FROM listings WHERE id = ? AND status = 'approved'").get(listingId);
+    if (!listing) {
+      sendJson(res, 404, { error: "Listing not found." });
+      return;
+    }
+    if (method === "POST") {
+      db.prepare("INSERT OR IGNORE INTO favorites (user_id, listing_id) VALUES (?, ?)").run(user.id, listingId);
+    } else {
+      db.prepare("DELETE FROM favorites WHERE user_id = ? AND listing_id = ?").run(user.id, listingId);
+    }
+    const favorites = db.prepare("SELECT listing_id FROM favorites WHERE user_id = ?").all(user.id).map((row) => row.listing_id);
+    sendJson(res, 200, { listingIds: favorites });
+    return;
+  }
+
   if (method === "POST" && requestUrl.pathname === "/api/checkout") {
     requireUser(res, user);
     if (!user) return;
@@ -391,6 +631,7 @@ async function routeApi(req, res, requestUrl, method) {
     }
 
     const total = rows.reduce((sum, row) => sum + row.price_cents, 0);
+    const platformFee = rows.reduce((sum, row) => sum + platformFeeForPrice(row.price_cents), 0);
     const allowedPaymentMethods = ["demo", "manual", "stripe"];
     if (!allowedPaymentMethods.includes(paymentMethod)) {
       sendJson(res, 400, { error: "Choose a valid payment method." });
@@ -412,15 +653,24 @@ async function routeApi(req, res, requestUrl, method) {
     const orderStatus = paymentMethod === "demo" ? "paid" : "awaiting_payment";
 
     db.prepare(
-      "INSERT INTO orders (buyer_id, total_cents, payment_method, payment_status, order_status, provider) VALUES (?, ?, ?, ?, ?, ?)",
-    ).run(user.id, total, paymentMethod, paymentStatus, orderStatus, paymentMethod);
+      "INSERT INTO orders (buyer_id, total_cents, platform_fee_cents, payment_method, payment_status, order_status, provider) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    ).run(user.id, total, platformFee, paymentMethod, paymentStatus, orderStatus, paymentMethod);
     const orderId = Number(db.prepare("SELECT last_insert_rowid() AS id").get().id);
 
     const insertItem = db.prepare(
-      "INSERT INTO order_items (order_id, listing_id, seller_id, title, price_cents, image_url) VALUES (?, ?, ?, ?, ?, ?)",
+      "INSERT INTO order_items (order_id, listing_id, seller_id, title, price_cents, platform_fee_cents, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)",
     );
     for (const row of rows) {
-      insertItem.run(orderId, row.id, row.seller_id, row.title, row.price_cents, row.image_url);
+      insertItem.run(orderId, row.id, row.seller_id, row.title, row.price_cents, platformFeeForPrice(row.price_cents), row.image_url);
+    }
+    for (const sellerId of [...new Set(rows.map((row) => row.seller_id))]) {
+      createNotification(
+        sellerId,
+        "order",
+        `New order #${orderId}`,
+        `${user.username} bought ${rows.filter((row) => row.seller_id === sellerId).length} listing(s).`,
+        "#account",
+      );
     }
 
     db.prepare("INSERT INTO payment_events (order_id, provider, event_type, payload) VALUES (?, ?, ?, ?)").run(
@@ -432,7 +682,7 @@ async function routeApi(req, res, requestUrl, method) {
 
     if (paymentMethod === "stripe") {
       try {
-        const session = await createStripeCheckoutSession(req, orderId, rows, user, total);
+        const session = await createStripeCheckoutSession(req, orderId, rows, user, platformFee);
         db.prepare("UPDATE orders SET provider_session_id = ? WHERE id = ?").run(session.id, orderId);
         db.prepare("INSERT INTO payment_events (order_id, provider, event_type, payload) VALUES (?, ?, ?, ?)").run(
           orderId,
@@ -514,6 +764,10 @@ async function routeApi(req, res, requestUrl, method) {
        WHERE id = ?
          AND order_status NOT IN ('cancelled', 'refunded', 'disputed')`,
     ).run(orderStatus, orderId);
+    const buyer = db.prepare("SELECT buyer_id FROM orders WHERE id = ?").get(orderId);
+    if (buyer) {
+      createNotification(buyer.buyer_id, "order", `Order #${orderId} ${orderStatus}`, `Seller marked your order ${orderStatus}.`, "#order");
+    }
 
     sendJson(res, 200, { order: getSellerOrder(orderId, user.id) });
     return;
@@ -554,14 +808,34 @@ async function routeApi(req, res, requestUrl, method) {
       return;
     }
 
-    const body = await readJson(req);
+    const body = await readJson(req, 5_000_000);
     const message = cleanText(body.message || "", 1000);
-    if (!message) {
+    let attachmentUrl = "";
+    if (body.attachmentDataUrl) {
+      attachmentUrl = await saveDataUrl(body.attachmentDataUrl);
+    }
+    const messageType = attachmentUrl ? "proof" : cleanText(body.messageType || "message", 20);
+    if (!message && !attachmentUrl) {
       sendJson(res, 400, { error: "Write a message first." });
       return;
     }
 
-    db.prepare("INSERT INTO order_messages (order_id, user_id, body) VALUES (?, ?, ?)").run(orderId, user.id, message);
+    db.prepare("INSERT INTO order_messages (order_id, user_id, body, message_type, attachment_url) VALUES (?, ?, ?, ?, ?)").run(
+      orderId,
+      user.id,
+      message || "Uploaded delivery proof.",
+      messageType === "proof" ? "proof" : "message",
+      attachmentUrl,
+    );
+    for (const participantId of orderParticipantIds(orderId).filter((id) => id !== user.id)) {
+      createNotification(
+        participantId,
+        messageType === "proof" ? "proof" : "message",
+        `Order #${orderId} update`,
+        `${user.username} ${attachmentUrl ? "uploaded proof" : "sent a message"}.`,
+        "#order",
+      );
+    }
     sendJson(res, 201, { messages: getOrderMessages(orderId) });
     return;
   }
@@ -580,22 +854,34 @@ async function routeApi(req, res, requestUrl, method) {
     const body = await readJson(req);
     const reason = cleanText(body.reason || "Buyer reported an issue.", 500);
     const disputeId = `internal_${orderId}`;
+    const evidenceDueAt = internalEvidenceDueAt(orderId);
     db.prepare(
       `INSERT INTO disputes
-        (order_id, provider, provider_dispute_id, charge_id, amount_cents, status, reason, raw_payload)
-       VALUES (?, 'internal', ?, '', ?, 'needs_review', ?, ?)
+        (order_id, provider, provider_dispute_id, charge_id, amount_cents, status, reason, evidence_due_at, raw_payload)
+       VALUES (?, 'internal', ?, '', ?, 'needs_review', ?, ?, ?)
        ON CONFLICT(provider_dispute_id) DO UPDATE SET
          status = 'needs_review',
          reason = excluded.reason,
+         evidence_due_at = excluded.evidence_due_at,
          raw_payload = excluded.raw_payload,
          updated_at = CURRENT_TIMESTAMP`,
-    ).run(orderId, disputeId, Math.round(Number(order.orderTotal || order.total || 0) * 100), reason, JSON.stringify({ user_id: user.id, reason }));
+    ).run(
+      orderId,
+      disputeId,
+      Math.round(Number(order.orderTotal || order.total || 0) * 100),
+      reason,
+      evidenceDueAt,
+      JSON.stringify({ user_id: user.id, reason, evidence_due_at: evidenceDueAt }),
+    );
     db.prepare("UPDATE orders SET order_status = 'disputed' WHERE id = ?").run(orderId);
     db.prepare("INSERT INTO order_messages (order_id, user_id, body) VALUES (?, ?, ?)").run(
       orderId,
       user.id,
       `Opened a dispute: ${reason}`,
     );
+    for (const participantId of orderParticipantIds(orderId).filter((id) => id !== user.id)) {
+      createNotification(participantId, "dispute", `Dispute opened on order #${orderId}`, reason, "#account");
+    }
     sendJson(res, 201, { order: getOrderForUser(orderId, user), messages: getOrderMessages(orderId) });
     return;
   }
@@ -637,6 +923,8 @@ async function routeApi(req, res, requestUrl, method) {
          comment = excluded.comment,
          created_at = CURRENT_TIMESTAMP`,
     ).run(orderId, user.id, ratedUserId, score, comment);
+    updateSellerTier(ratedUserId);
+    createNotification(ratedUserId, "rating", `New ${score}-star rating`, comment || `Order #${orderId} was rated.`, "#account");
     sendJson(res, 201, { order: getOrderForUser(orderId, user), seller: getSellerProfile(ratedUserId) });
     return;
   }
@@ -676,6 +964,10 @@ async function routeApi(req, res, requestUrl, method) {
       return;
     }
     db.prepare("UPDATE orders SET order_status = 'complete' WHERE id = ?").run(orderId);
+    for (const sellerId of orderSellerIds(orderId)) {
+      createNotification(sellerId, "order", `Order #${orderId} complete`, `${user.username} confirmed receipt.`, "#account");
+      updateSellerTier(sellerId);
+    }
     sendJson(res, 200, { order: getOrderForUser(orderId, user) });
     return;
   }
@@ -690,7 +982,7 @@ async function routeApi(req, res, requestUrl, method) {
   sendJson(res, 404, { error: "API route not found." });
 }
 
-async function routeAdmin(req, res, requestUrl, method) {
+async function routeAdmin(req, res, requestUrl, method, user) {
   if (method === "GET" && requestUrl.pathname === "/api/admin/listings") {
     const rows = db
       .prepare(
@@ -741,6 +1033,56 @@ async function routeAdmin(req, res, requestUrl, method) {
     return;
   }
 
+  const disputeResolveMatch = requestUrl.pathname.match(/^\/api\/admin\/disputes\/(\d+)\/resolve$/);
+  if (method === "POST" && disputeResolveMatch) {
+    const body = await readJson(req);
+    const disputeId = Number(disputeResolveMatch[1]);
+    const outcome = cleanText(body.outcome || "", 30);
+    const note = cleanText(body.note || "", 500);
+    const dispute = db.prepare("SELECT * FROM disputes WHERE id = ?").get(disputeId);
+    if (!dispute) {
+      sendJson(res, 404, { error: "Dispute not found." });
+      return;
+    }
+    const order = dispute.order_id ? db.prepare("SELECT * FROM orders WHERE id = ?").get(dispute.order_id) : null;
+    if (!["buyer", "seller", "cancel"].includes(outcome)) {
+      sendJson(res, 400, { error: "Use buyer, seller, or cancel as the resolution." });
+      return;
+    }
+    try {
+      if (order && outcome === "buyer") {
+        const remaining = order.total_cents - order.refunded_cents;
+        if (remaining > 0) {
+          await createOrderRefund(order, remaining, "requested_by_customer");
+        }
+        db.prepare("UPDATE orders SET order_status = 'refunded' WHERE id = ?").run(order.id);
+      } else if (order && outcome === "seller") {
+        db.prepare("UPDATE orders SET order_status = 'complete' WHERE id = ?").run(order.id);
+        for (const sellerId of orderSellerIds(order.id)) updateSellerTier(sellerId);
+      } else if (order && outcome === "cancel") {
+        db.prepare("UPDATE orders SET order_status = 'cancelled' WHERE id = ?").run(order.id);
+      }
+      db.prepare(
+        "UPDATE disputes SET status = ?, resolution = ?, resolved_by = ?, resolved_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+      ).run(`resolved_${outcome}`, note || `Resolved in favor of ${outcome}.`, user.id, disputeId);
+      if (order) {
+        for (const participantId of orderParticipantIds(order.id)) {
+          createNotification(
+            participantId,
+            "dispute",
+            `Dispute resolved on order #${order.id}`,
+            note || `Resolution: ${outcome}.`,
+            "#account",
+          );
+        }
+      }
+      sendJson(res, 200, { dispute: formatDispute(db.prepare("SELECT * FROM disputes WHERE id = ?").get(disputeId)) });
+    } catch (error) {
+      sendJson(res, 502, { error: `Resolution failed: ${error.message}` });
+    }
+    return;
+  }
+
   const refundMatch = requestUrl.pathname.match(/^\/api\/admin\/orders\/(\d+)\/refund$/);
   if (method === "POST" && refundMatch) {
     const body = await readJson(req);
@@ -761,6 +1103,9 @@ async function routeAdmin(req, res, requestUrl, method) {
 
     try {
       const refund = await createOrderRefund(order, requested, cleanText(body.reason || "requested_by_customer", 80));
+      for (const participantId of orderParticipantIds(orderId)) {
+        createNotification(participantId, "refund", `Refund issued for order #${orderId}`, `${centsToDollars(requested)} refunded.`, "#account");
+      }
       sendJson(res, 201, { refund, order: getOrder(orderId, { role: "admin" }) });
     } catch (error) {
       sendJson(res, 502, { error: `Refund failed: ${error.message}` });
@@ -855,13 +1200,26 @@ async function validateListing(body) {
   const category = cleanText(body.category, 30);
   const description = cleanText(body.description, 600);
   const deliveryMethod = cleanText(body.deliveryMethod, 30);
+  const deliveryWindow = cleanText(body.deliveryWindow || "24 hours", 30);
+  const region = cleanText(body.region || "Global", 30);
+  const platform = cleanText(body.platform || "All platforms", 40);
+  const stock = Math.round(Number(body.stock || 1));
+  const warrantyDays = Math.round(Number(body.warrantyDays || 0));
   const priceCents = Math.round(Number(body.price || 0) * 100);
-  const categories = ["Currency", "Items", "Accounts", "Boosting", "Gift Cards"];
+  const categories = ["Currency", "Items", "Accounts", "Boosting", "Gift Cards", "Top Ups"];
   const deliveries = ["Instant", "Coordinated", "Manual", "Quote"];
+  const deliveryWindows = ["15 min", "1 hour", "6 hours", "12 hours", "24 hours", "2 days", "3 days"];
+  const regions = ["Global", "NA", "EU", "Asia", "Oceania", "LATAM"];
 
   if (!title || !game || !description) return { error: "Title, game, and description are required." };
   if (!categories.includes(category)) return { error: "Choose a valid category." };
   if (!deliveries.includes(deliveryMethod)) return { error: "Choose a valid delivery method." };
+  if (!deliveryWindows.includes(deliveryWindow)) return { error: "Choose a valid delivery time." };
+  if (!regions.includes(region)) return { error: "Choose a valid region." };
+  if (!Number.isFinite(stock) || stock < 1 || stock > 999) return { error: "Stock must be between 1 and 999." };
+  if (!Number.isFinite(warrantyDays) || warrantyDays < 0 || warrantyDays > 30) {
+    return { error: "Warranty days must be between 0 and 30." };
+  }
   if (!Number.isFinite(priceCents) || priceCents < 0 || priceCents > 10000000) {
     return { error: "Use a valid price." };
   }
@@ -884,7 +1242,20 @@ async function validateListing(body) {
   }
 
   if (!imageUrl) imageUrl = makeSvgDataUrl(title, game);
-  return { title, game, category, description, deliveryMethod, priceCents, imageUrl };
+  return {
+    title,
+    game,
+    category,
+    description,
+    deliveryMethod,
+    deliveryWindow,
+    stock,
+    region,
+    platform,
+    warrantyDays,
+    priceCents,
+    imageUrl,
+  };
 }
 
 async function saveDataUrl(dataUrl) {
@@ -950,6 +1321,8 @@ function getOrder(orderId, user) {
     viewerRole: user.role === "admin" ? "admin" : "buyer",
     buyerName: order.buyer_name,
     total: centsToDollars(order.total_cents),
+    platformFee: centsToDollars(order.platform_fee_cents),
+    sellerProceeds: centsToDollars(order.total_cents - order.platform_fee_cents),
     paymentMethod: order.payment_method,
     paymentStatus: order.payment_status,
     orderStatus: order.order_status,
@@ -966,6 +1339,8 @@ function getOrder(orderId, user) {
       sellerName: item.seller_name,
       title: item.title,
       price: centsToDollars(item.price_cents),
+      platformFee: centsToDollars(item.platform_fee_cents),
+      sellerNet: centsToDollars(item.price_cents - item.platform_fee_cents),
       imageUrl: item.item_image_url || makeSvgDataUrl(item.title, "LootXHub"),
     })),
     refunds: db
@@ -1002,13 +1377,16 @@ function getSellerOrder(orderId, sellerId) {
     )
     .all(orderId, sellerId);
   const sellerTotal = items.reduce((sum, item) => sum + Number(item.price_cents), 0);
+  const sellerFees = items.reduce((sum, item) => sum + Number(item.platform_fee_cents || 0), 0);
 
   return {
     id: order.id,
     viewerRole: "seller",
     buyerName: order.buyer_name,
-    total: centsToDollars(sellerTotal),
+    total: centsToDollars(sellerTotal - sellerFees),
     orderTotal: centsToDollars(order.total_cents),
+    platformFee: centsToDollars(sellerFees),
+    grossTotal: centsToDollars(sellerTotal),
     paymentMethod: order.payment_method,
     paymentStatus: order.payment_status,
     orderStatus: order.order_status,
@@ -1021,6 +1399,8 @@ function getSellerOrder(orderId, sellerId) {
       sellerName: item.seller_name,
       title: item.title,
       price: centsToDollars(item.price_cents),
+      platformFee: centsToDollars(item.platform_fee_cents),
+      sellerNet: centsToDollars(item.price_cents - item.platform_fee_cents),
       imageUrl: item.item_image_url || makeSvgDataUrl(item.title, "LootXHub"),
     })),
   };
@@ -1057,6 +1437,9 @@ function formatDispute(row) {
     status: row.status,
     reason: row.reason,
     evidenceDueAt: row.evidence_due_at,
+    resolution: row.resolution,
+    resolvedBy: row.resolved_by,
+    resolvedAt: row.resolved_at,
     updatedAt: row.updated_at,
   };
 }
@@ -1073,6 +1456,13 @@ function formatListing(row) {
     description: row.description,
     price: centsToDollars(row.price_cents),
     deliveryMethod: row.delivery_method,
+    deliveryWindow: row.delivery_window || "24 hours",
+    stock: Number(row.stock || 1),
+    region: row.region || "Global",
+    platform: row.platform || "All platforms",
+    warrantyDays: Number(row.warranty_days || 0),
+    soldCount: Number(row.sold_count ?? listingSoldCount(row.id)),
+    favoriteCount: Number(row.favorite_count ?? listingFavoriteCount(row.id)),
     imageUrl: row.image_url,
     status: row.status,
     moderationNote: row.moderation_note,
@@ -1081,8 +1471,16 @@ function formatListing(row) {
   };
 }
 
+function listingSoldCount(listingId) {
+  return db.prepare("SELECT COUNT(*) AS count FROM order_items WHERE listing_id = ?").get(listingId).count;
+}
+
+function listingFavoriteCount(listingId) {
+  return db.prepare("SELECT COUNT(*) AS count FROM favorites WHERE listing_id = ?").get(listingId).count;
+}
+
 function getSellerProfile(sellerId) {
-  const seller = db.prepare("SELECT id, username, role, seller_status, created_at FROM users WHERE id = ?").get(sellerId);
+  const seller = db.prepare("SELECT * FROM users WHERE id = ?").get(sellerId);
   if (!seller) return null;
 
   const rating = db
@@ -1118,12 +1516,17 @@ function getSellerProfile(sellerId) {
   if (completed >= 1) badges.push("Completed orders");
   if (Number(rating.average) >= 4.5 && Number(rating.count) >= 3) badges.push("Top rated");
   if (activeListings >= 5) badges.push("High stock");
+  const sellerTier = sellerTierForStats(completed, Number(rating.average || 0), Number(rating.count || 0), activeListings);
+  if (!badges.includes(sellerTier)) badges.push(sellerTier);
+  if (seller.stripe_payouts_enabled) badges.push("Payout ready");
 
   return {
     id: seller.id,
     username: seller.username,
     role: seller.role,
     sellerStatus: seller.seller_status,
+    sellerTier,
+    connect: sellerConnectStatus(seller),
     joinedAt: seller.created_at,
     ratingAverage: Number(Number(rating.average || 0).toFixed(1)),
     ratingCount: rating.count,
@@ -1139,6 +1542,7 @@ function getSellerWallet(sellerId) {
   const rows = db
     .prepare(
       `SELECT orders.id, orders.order_status, orders.payment_status, order_items.price_cents
+              , order_items.platform_fee_cents
        FROM order_items
        JOIN orders ON orders.id = order_items.order_id
        WHERE order_items.seller_id = ?`,
@@ -1152,14 +1556,18 @@ function getSellerWallet(sellerId) {
     grossSales: 0,
     completedOrders: 0,
     pendingOrders: 0,
+    platformFees: 0,
   };
 
   const completedIds = new Set();
   const pendingIds = new Set();
 
   for (const row of rows) {
-    const amount = Number(row.price_cents || 0);
-    wallet.grossSales += amount;
+    const gross = Number(row.price_cents || 0);
+    const fee = Number(row.platform_fee_cents || 0);
+    const amount = Math.max(0, gross - fee);
+    wallet.platformFees += fee;
+    wallet.grossSales += gross;
     if (row.order_status === "complete") {
       wallet.available += amount;
       completedIds.add(row.id);
@@ -1179,6 +1587,7 @@ function getSellerWallet(sellerId) {
     available: centsToDollars(wallet.available),
     held: centsToDollars(wallet.held),
     grossSales: centsToDollars(wallet.grossSales),
+    platformFees: centsToDollars(wallet.platformFees),
     completedOrders: wallet.completedOrders,
     pendingOrders: wallet.pendingOrders,
     payoutNote: "Connect Stripe Connect later to withdraw real seller balances.",
@@ -1202,8 +1611,90 @@ function getOrderMessages(orderId) {
       username: row.username,
       role: row.role,
       body: row.body,
+      messageType: row.message_type || "message",
+      attachmentUrl: row.attachment_url || "",
       createdAt: row.created_at,
     }));
+}
+
+function internalEvidenceDueAt(orderId) {
+  const rows = db
+    .prepare(
+      `SELECT listings.category
+       FROM order_items
+       JOIN listings ON listings.id = order_items.listing_id
+       WHERE order_items.order_id = ?`,
+    )
+    .all(orderId);
+  const quickProof = rows.some((row) => ["Currency", "Items", "Gift Cards", "Top Ups"].includes(row.category));
+  const hours = quickProof ? 2 : 12;
+  return new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
+}
+
+function platformFeeForPrice(priceCents) {
+  return Math.max(0, Math.round(Number(priceCents || 0) * (platformFeePercent / 100)));
+}
+
+function tokenHash(token) {
+  return crypto.createHash("sha256").update(String(token)).digest("hex");
+}
+
+function sellerTierForStats(completedOrders, ratingAverage, ratingCount, activeListings) {
+  if (completedOrders >= 100 && ratingAverage >= 4.8 && ratingCount >= 25) return "Elite Seller";
+  if (completedOrders >= 25 && ratingAverage >= 4.6 && ratingCount >= 8) return "Pro Seller";
+  if (completedOrders >= 3 || activeListings >= 5) return "Verified Seller";
+  return "New Seller";
+}
+
+function updateSellerTier(sellerId) {
+  const profile = getSellerProfile(sellerId);
+  if (!profile) return;
+  db.prepare("UPDATE users SET seller_tier = ? WHERE id = ?").run(profile.sellerTier, sellerId);
+}
+
+function sellerConnectStatus(user) {
+  return {
+    accountId: user?.stripe_account_id || "",
+    onboardingStatus: user?.stripe_onboarding_status || "not_started",
+    chargesEnabled: Boolean(user?.stripe_charges_enabled),
+    payoutsEnabled: Boolean(user?.stripe_payouts_enabled),
+    payoutReady: Boolean(user?.stripe_charges_enabled && user?.stripe_payouts_enabled),
+  };
+}
+
+function formatNotification(row) {
+  return {
+    id: row.id,
+    type: row.type,
+    title: row.title,
+    body: row.body,
+    url: row.url || "",
+    readAt: row.read_at,
+    createdAt: row.created_at,
+  };
+}
+
+function createNotification(userId, type, title, body, url = "") {
+  if (!userId) return;
+  db.prepare("INSERT INTO notifications (user_id, type, title, body, url) VALUES (?, ?, ?, ?, ?)").run(
+    userId,
+    cleanText(type, 40) || "notice",
+    cleanText(title, 120),
+    cleanText(body, 500),
+    cleanText(url, 120),
+  );
+}
+
+function orderSellerIds(orderId) {
+  return db
+    .prepare("SELECT DISTINCT seller_id FROM order_items WHERE order_id = ?")
+    .all(orderId)
+    .map((row) => row.seller_id);
+}
+
+function orderParticipantIds(orderId) {
+  const order = db.prepare("SELECT buyer_id FROM orders WHERE id = ?").get(orderId);
+  return [...new Set([order?.buyer_id, ...orderSellerIds(orderId)].filter(Boolean))];
 }
 
 function ratingTargetForOrder(orderId, user, requestedTargetId) {
@@ -1239,8 +1730,59 @@ function appBaseUrl(req) {
   return `http://${req.headers.host || `${host}:${port}`}`;
 }
 
-async function createStripeCheckoutSession(req, orderId, rows, user) {
+async function createStripeConnectedAccount(user) {
+  const account = await stripeRequest("POST", "/v1/accounts", {
+    type: "express",
+    email: user.email,
+    capabilities: {
+      card_payments: { requested: true },
+      transfers: { requested: true },
+    },
+    business_profile: {
+      product_description: "Digital goods marketplace seller",
+    },
+    metadata: {
+      lootxhub_user_id: String(user.id),
+    },
+  });
+  db.prepare(
+    "UPDATE users SET stripe_account_id = ?, stripe_onboarding_status = 'started', stripe_charges_enabled = ?, stripe_payouts_enabled = ? WHERE id = ?",
+  ).run(account.id, account.charges_enabled ? 1 : 0, account.payouts_enabled ? 1 : 0, user.id);
+  return account.id;
+}
+
+async function createStripeAccountLink(req, accountId) {
   const baseUrl = appBaseUrl(req);
+  return stripeRequest("POST", "/v1/account_links", {
+    account: accountId,
+    refresh_url: `${baseUrl}/#account`,
+    return_url: `${baseUrl}/#account`,
+    type: "account_onboarding",
+  });
+}
+
+async function refreshStripeAccountStatus(userId, accountId) {
+  const account = await stripeRequest("GET", `/v1/accounts/${encodeURIComponent(accountId)}`);
+  db.prepare(
+    `UPDATE users
+     SET stripe_onboarding_status = ?,
+         stripe_charges_enabled = ?,
+         stripe_payouts_enabled = ?
+     WHERE id = ?`,
+  ).run(
+    account.details_submitted ? "complete" : "started",
+    account.charges_enabled ? 1 : 0,
+    account.payouts_enabled ? 1 : 0,
+    userId,
+  );
+  return account;
+}
+
+async function createStripeCheckoutSession(req, orderId, rows, user, platformFeeCents = 0) {
+  const baseUrl = appBaseUrl(req);
+  const sellerIds = [...new Set(rows.map((row) => row.seller_id))];
+  const seller = sellerIds.length === 1 ? db.prepare("SELECT * FROM users WHERE id = ?").get(sellerIds[0]) : null;
+  const destination = seller?.stripe_account_id && seller.stripe_charges_enabled ? seller.stripe_account_id : "";
   const params = {
     mode: "payment",
     success_url: `${baseUrl}/?checkout=success&order_id=${orderId}`,
@@ -1256,6 +1798,12 @@ async function createStripeCheckoutSession(req, orderId, rows, user) {
         order_id: String(orderId),
         buyer_id: String(user.id),
       },
+      ...(destination
+        ? {
+            application_fee_amount: platformFeeCents,
+            transfer_data: { destination },
+          }
+        : {}),
     },
     line_items: rows.map((row) => ({
       quantity: 1,
@@ -1667,6 +2215,9 @@ function publicUser(user) {
     email: user.email,
     role: user.role,
     sellerStatus: user.seller_status,
+    sellerTier: user.seller_tier || "New Seller",
+    emailVerified: Boolean(user.email_verified),
+    connect: sellerConnectStatus(user),
     createdAt: user.created_at,
   };
 }
