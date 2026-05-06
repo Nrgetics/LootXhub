@@ -9,9 +9,9 @@ const { DatabaseSync } = require("node:sqlite");
 
 const rootDir = __dirname;
 loadEnvFile(path.join(rootDir, ".env"));
-const dataDir = path.join(rootDir, "data");
-const uploadDir = path.join(rootDir, "uploads");
-const dbPath = path.join(dataDir, "lootxhub.sqlite");
+const dataDir = resolveAppPath(process.env.DATA_DIR, path.join(rootDir, "data"));
+const uploadDir = resolveAppPath(process.env.UPLOAD_DIR, path.join(rootDir, "uploads"));
+const dbPath = resolveAppPath(process.env.DB_PATH, path.join(dataDir, "lootxhub.sqlite"));
 const port = Number(process.env.PORT || 5173);
 const host = process.env.HOST || "127.0.0.1";
 const sessionDays = 14;
@@ -1767,4 +1767,9 @@ function loadEnvFile(filePath) {
       process.env[key] = value;
     }
   }
+}
+
+function resolveAppPath(value, fallback) {
+  if (!value) return fallback;
+  return path.isAbsolute(value) ? value : path.join(rootDir, value);
 }
