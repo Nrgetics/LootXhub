@@ -1575,6 +1575,7 @@
       .detail-info,
       .seller-hero,
       .wallet-card,
+      .trust-card,
       .chat-panel,
       .rating-panel {
         border: 1px solid var(--line);
@@ -1597,6 +1598,7 @@
       .detail-info,
       .seller-hero,
       .wallet-card,
+      .trust-card,
       .chat-panel,
       .rating-panel {
         display: grid;
@@ -1612,9 +1614,10 @@
         color: #ffd05a;
       }
 
-      .seller-stat-grid,
-      .wallet-grid,
-      .order-tools-grid {
+        .seller-stat-grid,
+        .wallet-grid,
+        .trust-grid,
+        .order-tools-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
       }
 
@@ -1643,6 +1646,26 @@
         gap: 8px;
       }
 
+      .trust-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .trust-card {
+        min-height: 104px;
+      }
+
+      .trust-card strong {
+        font-size: 1.05rem;
+      }
+
+      .watch-button.active {
+        background: #ffd05a;
+        color: #111318;
+        border-color: #ffd05a;
+      }
+
       .chat-panel {
         grid-column: span 2;
       }
@@ -1664,12 +1687,20 @@
         background: #222631;
       }
 
+      .proof-image {
+        width: min(260px, 100%);
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        object-fit: cover;
+      }
+
       .chat-form {
         display: grid;
         gap: 8px;
       }
 
       .chat-form textarea,
+      .chat-form input,
       .rating-panel textarea {
         min-height: 86px;
         padding: 10px 11px;
@@ -1731,6 +1762,7 @@
         .detail-hero,
         .seller-stat-grid,
         .wallet-grid,
+        .trust-grid,
         .order-tools-grid,
         .market-shell,
         .transfer-grid,
@@ -1816,6 +1848,7 @@
           <option value="Items">Items</option>
           <option value="Boosting">Boosting</option>
           <option value="Gift Cards">Gift Cards</option>
+          <option value="Top Ups">Top Ups</option>
         </select>
         <input id="globalSearch" type="search" placeholder="Search for game, item, seller, or offer..." autocomplete="off" />
         <button class="primary-button search-submit" id="globalSearchSubmit" type="button">Search</button>
@@ -1841,6 +1874,7 @@
         <a href="#market" data-nav-page="market" data-category="Accounts">Accounts</a>
         <a href="#market" data-nav-page="market" data-category="Items">Items</a>
         <a href="#market" data-nav-page="market" data-category="Boosting">Boosting</a>
+        <a href="#market" data-nav-page="market" data-category="Top Ups">Top Ups</a>
         <a href="#sell" data-nav-page="sell">Start selling</a>
         <a href="#account" data-nav-page="account">Orders</a>
         <a href="#admin" id="adminShortcut" class="hidden" data-nav-page="admin">Admin</a>
@@ -2012,6 +2046,10 @@
             <p class="eyebrow">Seller wallet</p>
             <div class="wallet-grid" id="walletGrid"></div>
           </div>
+          <div>
+            <p class="eyebrow">Watchlist</p>
+            <div class="order-list-mini" id="favoriteListings"></div>
+          </div>
           <div class="account-order-grid">
             <article class="account-order-column">
               <div class="mini-head">
@@ -2045,10 +2083,12 @@
             <h1 id="detailTitle">Listing</h1>
             <div class="detail-price" id="detailPrice">$0.00</div>
             <div class="badge-row" id="detailTags"></div>
+            <div class="trust-grid" id="detailTrustGrid"></div>
             <p id="detailDescription"></p>
             <div class="seller-stat-grid" id="detailSellerStats"></div>
             <div class="admin-actions">
               <button class="primary-button" id="detailBuyButton" type="button">Add to checkout</button>
+              <button class="secondary-button watch-button" id="detailWatchButton" type="button">Watch</button>
               <button class="secondary-button" id="detailSellerButton" type="button">View seller</button>
               <a class="ghost-button" href="#market">Back to marketplace</a>
             </div>
@@ -2126,6 +2166,7 @@
             <div class="chat-list" id="orderChatList"></div>
             <form class="chat-form" id="orderMessageForm">
               <textarea id="orderMessageText" placeholder="Write delivery info, questions, or proof notes..."></textarea>
+              <input id="orderProofFile" type="file" accept="image/*" aria-label="Upload delivery proof" />
               <button class="primary-button" type="submit">Send message</button>
             </form>
           </article>
@@ -2175,6 +2216,10 @@
         <button class="category-card chip-button" type="button" data-category="Gift Cards">
           <span><strong>Gift Cards</strong><small>Codes and requests</small></span>
           <span class="category-icon" style="--cat-bg: linear-gradient(135deg, #21bad5, #15a67a)">G</span>
+        </button>
+        <button class="category-card chip-button" type="button" data-category="Top Ups">
+          <span><strong>Top Ups</strong><small>Balance and service fills</small></span>
+          <span class="category-icon" style="--cat-bg: linear-gradient(135deg, #ffd05a, #ef7b45)">T</span>
         </button>
       </section>
 
@@ -2230,6 +2275,7 @@
               <button class="chip-button" type="button" data-category="Accounts">Accounts</button>
               <button class="chip-button" type="button" data-category="Boosting">Boosting</button>
               <button class="chip-button" type="button" data-category="Gift Cards">Gift Cards</button>
+              <button class="chip-button" type="button" data-category="Top Ups">Top Ups</button>
             </div>
           </div>
           <div class="filter-group">
@@ -2395,6 +2441,7 @@
                 <option>Accounts</option>
                 <option>Boosting</option>
                 <option>Gift Cards</option>
+                <option>Top Ups</option>
               </select>
             </div>
             <div class="form-field">
@@ -2409,6 +2456,41 @@
                 <option>Manual</option>
                 <option>Quote</option>
               </select>
+            </div>
+            <div class="form-field">
+              <label for="listingDeliveryWindow">Delivery time</label>
+              <select id="listingDeliveryWindow">
+                <option>15 min</option>
+                <option>1 hour</option>
+                <option>6 hours</option>
+                <option>12 hours</option>
+                <option selected>24 hours</option>
+                <option>2 days</option>
+                <option>3 days</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="listingStock">Stock</label>
+              <input id="listingStock" type="number" min="1" max="999" step="1" value="1" />
+            </div>
+            <div class="form-field">
+              <label for="listingRegion">Region</label>
+              <select id="listingRegion">
+                <option>Global</option>
+                <option>NA</option>
+                <option>EU</option>
+                <option>Asia</option>
+                <option>Oceania</option>
+                <option>LATAM</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="listingPlatform">Platform</label>
+              <input id="listingPlatform" placeholder="All platforms" />
+            </div>
+            <div class="form-field">
+              <label for="listingWarrantyDays">Warranty days</label>
+              <input id="listingWarrantyDays" type="number" min="0" max="30" step="1" value="0" />
             </div>
             <div class="form-field">
               <label for="listingImageFile">Upload image</label>
@@ -2466,6 +2548,8 @@
         myOrders: [],
         sellerOrders: [],
         wallet: null,
+        favoriteIds: [],
+        favoriteListings: [],
         activeOrder: null,
         activeMessages: [],
         activeListing: null,
@@ -2546,7 +2630,11 @@
 
       function visibleListings() {
         return state.listings
-          .filter((item) => `${item.title} ${item.game} ${item.category} ${item.sellerName} ${item.description}`.toLowerCase().includes(state.query.toLowerCase()))
+          .filter((item) =>
+            `${item.title} ${item.game} ${item.category} ${item.sellerName} ${item.description} ${item.region} ${item.platform}`
+              .toLowerCase()
+              .includes(state.query.toLowerCase()),
+          )
           .filter((item) => state.category === "All" || item.category === state.category)
           .filter((item) => state.game === "All" || item.game === state.game)
           .filter((item) => state.delivery === "All" || item.deliveryMethod === state.delivery)
@@ -2630,6 +2718,24 @@
             <span class="muted">Disputes and manual review</span>
           </article>
         `;
+        $("#favoriteListings").innerHTML =
+          (state.favoriteListings || [])
+            .map(
+              (item) => `
+                <div class="order-card">
+                  <div class="status-line">
+                    <span class="tag fast">${escapeHTML(item.deliveryWindow || "24 hours")}</span>
+                    <strong>${money(item.price)}</strong>
+                  </div>
+                  <span class="muted">${escapeHTML(item.title)} | ${escapeHTML(item.game)} | ${escapeHTML(item.region || "Global")}</span>
+                  <div class="admin-actions">
+                    <button class="secondary-button" type="button" data-view="${item.id}">Details</button>
+                    <button class="secondary-button watch-button active" type="button" data-watch="${item.id}">Unwatch</button>
+                  </div>
+                </div>
+              `,
+            )
+            .join("") || `<p class="help-text">Watch listings to compare prices and delivery speed.</p>`;
 
         $("#myOrdersList").innerHTML =
           state.myOrders
@@ -2800,9 +2906,10 @@
           state.activeMessages
             .map(
               (message) => `
-                <div class="chat-message">
+                <div class="chat-message ${message.messageType === "proof" ? "proof" : ""}">
                   <strong>${escapeHTML(message.username)} <span class="muted">| ${escapeHTML(message.role)} | ${escapeHTML(message.createdAt)}</span></strong>
                   <span>${escapeHTML(message.body)}</span>
+                  ${message.attachmentUrl ? `<img class="proof-image" src="${escapeHTML(message.attachmentUrl)}" alt="Order proof" />` : ""}
                 </div>
               `,
             )
@@ -2819,6 +2926,20 @@
         `;
       }
 
+      function trustCard(label, value, helper = "") {
+        return `
+          <div class="trust-card">
+            <span class="muted">${escapeHTML(label)}</span>
+            <strong>${escapeHTML(value)}</strong>
+            ${helper ? `<small class="muted">${escapeHTML(helper)}</small>` : ""}
+          </div>
+        `;
+      }
+
+      function isWatched(listingId) {
+        return state.favoriteIds.includes(Number(listingId));
+      }
+
       function renderListingDetail() {
         const listing = state.activeListing;
         if (!listing) return;
@@ -2830,6 +2951,14 @@
         $("#detailTags").innerHTML = [listing.game, listing.category, listing.deliveryMethod, listing.status]
           .map((tag) => `<span class="tag fast">${escapeHTML(tag)}</span>`)
           .join("");
+        $("#detailTrustGrid").innerHTML = [
+          trustCard("Delivery", listing.deliveryWindow || "24 hours", listing.deliveryMethod || ""),
+          trustCard("Stock", `${listing.stock || 1} available`, `${listing.soldCount || 0} sold`),
+          trustCard("Region", listing.region || "Global", listing.platform || "All platforms"),
+          trustCard("Warranty", listing.warrantyDays ? `${listing.warrantyDays} day(s)` : "Standard hold", "Order-room proof supported"),
+        ].join("");
+        $("#detailWatchButton").classList.toggle("active", isWatched(listing.id));
+        $("#detailWatchButton").textContent = isWatched(listing.id) ? "Watching" : "Watch";
         $("#detailSellerStats").innerHTML = seller
           ? [
               statCard("Seller", seller.username, seller.badges?.[0] || "Self-serve"),
@@ -2864,9 +2993,17 @@
                     </div>
                     <h3>${escapeHTML(item.title)}</h3>
                     <p>${escapeHTML(item.description)}</p>
+                    <div class="listing-meta">
+                      <span class="tag fast">${escapeHTML(item.deliveryWindow || "24 hours")}</span>
+                      <span class="tag">${escapeHTML(item.region || "Global")}</span>
+                      <span class="tag">${escapeHTML(String(item.stock || 1))} in stock</span>
+                    </div>
                     <div class="card-actions">
                       <button class="buy-button" type="button" data-add="${item.id}">Add</button>
                       <button class="secondary-button" type="button" data-view="${item.id}">Details</button>
+                      <button class="secondary-button watch-button ${isWatched(item.id) ? "active" : ""}" type="button" data-watch="${item.id}">
+                        ${isWatched(item.id) ? "Watching" : "Watch"}
+                      </button>
                       <button class="secondary-button" type="button" data-seller="${item.sellerId}">Seller</button>
                     </div>
                   </div>
@@ -2898,13 +3035,21 @@
                   </div>
                   <h3>${escapeHTML(item.title)}</h3>
                   <p>${escapeHTML(item.description)}</p>
+                  <div class="listing-meta">
+                    <span class="tag fast">${escapeHTML(item.deliveryWindow || "24 hours")}</span>
+                    <span class="tag">${escapeHTML(item.region || "Global")}</span>
+                    <span class="tag">${escapeHTML(String(item.soldCount || 0))} sold</span>
+                  </div>
                   <div class="seller-line">
                     <span>${escapeHTML(item.sellerName)}</span>
-                    <span>${escapeHTML(item.sellerRole)}</span>
+                    <span>${escapeHTML(item.favoriteCount || 0)} watching</span>
                   </div>
                   <div class="card-actions">
                     <button class="buy-button" type="button" data-add="${item.id}">Add</button>
                     <button class="secondary-button" type="button" data-view="${item.id}">Details</button>
+                    <button class="secondary-button watch-button ${isWatched(item.id) ? "active" : ""}" type="button" data-watch="${item.id}">
+                      ${isWatched(item.id) ? "Watching" : "Watch"}
+                    </button>
                     <button class="secondary-button" type="button" data-seller="${item.sellerId}">Seller</button>
                   </div>
                 </div>
@@ -3139,6 +3284,20 @@
         routePage();
       }
 
+      async function toggleWatch(listingId) {
+        const watching = isWatched(listingId);
+        const data = await api(`/api/favorites/${listingId}`, { method: watching ? "DELETE" : "POST", body: "{}" });
+        state.favoriteIds = data.listingIds || [];
+        if (state.user) {
+          const favorites = await api("/api/my/favorites");
+          state.favoriteIds = favorites.listingIds || state.favoriteIds;
+          state.favoriteListings = favorites.listings || [];
+        }
+        const listing = state.listings.find((item) => item.id === listingId);
+        render();
+        toast(`${listing?.title || "Listing"} ${watching ? "removed from watchlist." : "added to watchlist."}`);
+      }
+
       async function hydrateCheckoutReturn() {
         const params = new URLSearchParams(location.search);
         const checkout = params.get("checkout");
@@ -3182,21 +3341,26 @@
           state.listings = listingData.listings;
           state.selectedId ||= state.listings[0]?.id || null;
           if (state.user) {
-            const [myListingsData, myOrdersData, sellerOrdersData, walletData] = await Promise.all([
+            const [myListingsData, myOrdersData, sellerOrdersData, walletData, favoriteData] = await Promise.all([
               api("/api/my/listings"),
               api("/api/my/orders"),
               api("/api/my/sales"),
               api("/api/my/wallet"),
+              api("/api/my/favorites"),
             ]);
             state.myListings = myListingsData.listings;
             state.myOrders = myOrdersData.orders.filter(Boolean);
             state.sellerOrders = sellerOrdersData.orders.filter(Boolean);
             state.wallet = walletData.wallet;
+            state.favoriteIds = favoriteData.listingIds || [];
+            state.favoriteListings = favoriteData.listings || [];
           } else {
             state.myListings = [];
             state.myOrders = [];
             state.sellerOrders = [];
             state.wallet = null;
+            state.favoriteIds = [];
+            state.favoriteListings = [];
           }
           if (state.user?.role === "admin") {
             state.adminListings = (await api("/api/admin/listings")).listings;
@@ -3371,12 +3535,14 @@
         event.preventDefault();
         if (!state.activeOrder) return;
         try {
+          const proofDataUrl = await fileToDataUrl($("#orderProofFile").files[0]);
           const data = await api(`/api/orders/${state.activeOrder.id}/messages`, {
             method: "POST",
-            body: JSON.stringify({ message: $("#orderMessageText").value }),
+            body: JSON.stringify({ message: $("#orderMessageText").value, attachmentDataUrl: proofDataUrl }),
           });
           state.activeMessages = data.messages;
           $("#orderMessageText").value = "";
+          $("#orderProofFile").value = "";
           renderOrderMessages();
           toast("Message sent.");
         } catch (error) {
@@ -3463,6 +3629,12 @@
         const add = event.target.closest("[data-add]");
         const view = event.target.closest("[data-view]");
         const seller = event.target.closest("[data-seller]");
+        const watch = event.target.closest("[data-watch]");
+        if (watch) {
+          if (!requireAccount()) return;
+          await toggleWatch(Number(watch.dataset.watch));
+          return;
+        }
         if (view) {
           try {
             await openListing(Number(view.dataset.view));
@@ -3493,6 +3665,7 @@
 
       $("#listingGrid").addEventListener("click", handleListingAction);
       $("#sellerListings").addEventListener("click", handleListingAction);
+      $("#favoriteListings").addEventListener("click", handleListingAction);
 
       $("#selectedAdd").addEventListener("click", () => {
         if (!requireAccount()) return;
@@ -3511,6 +3684,16 @@
         render();
         location.hash = "#checkout";
         toast(`${state.activeListing.title} added to checkout.`);
+      });
+
+      $("#detailWatchButton").addEventListener("click", async () => {
+        if (!state.activeListing) return;
+        if (!requireAccount()) return;
+        try {
+          await toggleWatch(state.activeListing.id);
+        } catch (error) {
+          toast(error.message);
+        }
       });
 
       $("#detailSellerButton").addEventListener("click", async () => {
@@ -3599,6 +3782,8 @@
         state.myOrders = [];
         state.sellerOrders = [];
         state.wallet = null;
+        state.favoriteIds = [];
+        state.favoriteListings = [];
         state.activeOrder = null;
         state.activeMessages = [];
         window.localStorage.removeItem("lootxhub:lastOrderId");
@@ -3623,6 +3808,11 @@
               description: $("#listingDescription").value,
               price: $("#listingPrice").value,
               deliveryMethod: $("#listingDelivery").value,
+              deliveryWindow: $("#listingDeliveryWindow").value,
+              stock: $("#listingStock").value,
+              region: $("#listingRegion").value,
+              platform: $("#listingPlatform").value,
+              warrantyDays: $("#listingWarrantyDays").value,
               imageUrl: $("#listingImageUrl").value,
               imageDataUrl,
             }),

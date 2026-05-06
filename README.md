@@ -30,11 +30,13 @@ Change this before any real deployment.
 - Seller listing creation
 - Server-side image uploads in `uploads/`
 - Self-serve public marketplace listings
+- Delivery windows, region/platform fields, stock count, and warranty notes
+- Buyer watchlist/favorites
 - Listing detail pages and seller profile pages
 - Seller wallet snapshot for pending, held, and completed sales
-- Buyer/seller order chat
+- Buyer/seller order chat with proof image uploads
 - Order completion ratings
-- Internal buyer-protection holds that create dispute records
+- Internal buyer-protection holds that create dispute records and evidence deadlines
 - Admin listing management and rejection tools
 - Cart and checkout order creation
 - Demo/manual payment states and payment event records

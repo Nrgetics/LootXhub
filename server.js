@@ -52,6 +52,11 @@ db.exec(`
     description TEXT NOT NULL,
     price_cents INTEGER NOT NULL,
     delivery_method TEXT NOT NULL,
+    delivery_window TEXT NOT NULL DEFAULT '24 hours',
+    stock INTEGER NOT NULL DEFAULT 1,
+    region TEXT NOT NULL DEFAULT 'Global',
+    platform TEXT NOT NULL DEFAULT 'All platforms',
+    warranty_days INTEGER NOT NULL DEFAULT 0,
     image_url TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'pending',
     moderation_note TEXT,
@@ -119,6 +124,8 @@ db.exec(`
     order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     body TEXT NOT NULL,
+    message_type TEXT NOT NULL DEFAULT 'message',
+    attachment_url TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -132,15 +139,29 @@ db.exec(`
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(order_id, rater_id, rated_user_id)
   );
+
+  CREATE TABLE IF NOT EXISTS favorites (
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    listing_id INTEGER NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, listing_id)
+  );
 `);
 
 ensureColumn("users", "seller_status", "TEXT NOT NULL DEFAULT 'active'");
+ensureColumn("listings", "delivery_window", "TEXT NOT NULL DEFAULT '24 hours'");
+ensureColumn("listings", "stock", "INTEGER NOT NULL DEFAULT 1");
+ensureColumn("listings", "region", "TEXT NOT NULL DEFAULT 'Global'");
+ensureColumn("listings", "platform", "TEXT NOT NULL DEFAULT 'All platforms'");
+ensureColumn("listings", "warranty_days", "INTEGER NOT NULL DEFAULT 0");
 ensureColumn("orders", "provider", "TEXT");
 ensureColumn("orders", "provider_session_id", "TEXT");
 ensureColumn("orders", "provider_payment_intent", "TEXT");
 ensureColumn("orders", "provider_charge_id", "TEXT");
 ensureColumn("orders", "refunded_cents", "INTEGER NOT NULL DEFAULT 0");
 ensureColumn("order_items", "image_url", "TEXT");
+ensureColumn("order_messages", "message_type", "TEXT NOT NULL DEFAULT 'message'");
+ensureColumn("order_messages", "attachment_url", "TEXT");
 
 seedAdmin();
 seedListings();
@@ -320,8 +341,8 @@ async function routeApi(req, res, requestUrl, method) {
 
     db.prepare(
       `INSERT INTO listings
-        (seller_id, title, game, category, description, price_cents, delivery_method, image_url, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'approved')`,
+        (seller_id, title, game, category, description, price_cents, delivery_method, delivery_window, stock, region, platform, warranty_days, image_url, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved')`,
     ).run(
       user.id,
       listing.title,
@@ -330,6 +351,11 @@ async function routeApi(req, res, requestUrl, method) {
       listing.description,
       listing.priceCents,
       listing.deliveryMethod,
+      listing.deliveryWindow,
+      listing.stock,
+      listing.region,
+      listing.platform,
+      listing.warrantyDays,
       listing.imageUrl,
     );
 
@@ -364,6 +390,43 @@ async function routeApi(req, res, requestUrl, method) {
     requireUser(res, user);
     if (!user) return;
     sendJson(res, 200, { wallet: getSellerWallet(user.id) });
+    return;
+  }
+
+  if (method === "GET" && requestUrl.pathname === "/api/my/favorites") {
+    requireUser(res, user);
+    if (!user) return;
+    const rows = db
+      .prepare(
+        `SELECT listings.*, users.username AS seller_name, users.role AS seller_role
+         FROM favorites
+         JOIN listings ON listings.id = favorites.listing_id
+         JOIN users ON users.id = listings.seller_id
+         WHERE favorites.user_id = ? AND listings.status = 'approved'
+         ORDER BY favorites.created_at DESC`,
+      )
+      .all(user.id);
+    sendJson(res, 200, { listingIds: rows.map((row) => row.id), listings: rows.map(formatListing) });
+    return;
+  }
+
+  const favoriteMatch = requestUrl.pathname.match(/^\/api\/favorites\/(\d+)$/);
+  if ((method === "POST" || method === "DELETE") && favoriteMatch) {
+    requireUser(res, user);
+    if (!user) return;
+    const listingId = Number(favoriteMatch[1]);
+    const listing = db.prepare("SELECT id FROM listings WHERE id = ? AND status = 'approved'").get(listingId);
+    if (!listing) {
+      sendJson(res, 404, { error: "Listing not found." });
+      return;
+    }
+    if (method === "POST") {
+      db.prepare("INSERT OR IGNORE INTO favorites (user_id, listing_id) VALUES (?, ?)").run(user.id, listingId);
+    } else {
+      db.prepare("DELETE FROM favorites WHERE user_id = ? AND listing_id = ?").run(user.id, listingId);
+    }
+    const favorites = db.prepare("SELECT listing_id FROM favorites WHERE user_id = ?").all(user.id).map((row) => row.listing_id);
+    sendJson(res, 200, { listingIds: favorites });
     return;
   }
 
@@ -554,14 +617,25 @@ async function routeApi(req, res, requestUrl, method) {
       return;
     }
 
-    const body = await readJson(req);
+    const body = await readJson(req, 5_000_000);
     const message = cleanText(body.message || "", 1000);
-    if (!message) {
+    let attachmentUrl = "";
+    if (body.attachmentDataUrl) {
+      attachmentUrl = await saveDataUrl(body.attachmentDataUrl);
+    }
+    const messageType = attachmentUrl ? "proof" : cleanText(body.messageType || "message", 20);
+    if (!message && !attachmentUrl) {
       sendJson(res, 400, { error: "Write a message first." });
       return;
     }
 
-    db.prepare("INSERT INTO order_messages (order_id, user_id, body) VALUES (?, ?, ?)").run(orderId, user.id, message);
+    db.prepare("INSERT INTO order_messages (order_id, user_id, body, message_type, attachment_url) VALUES (?, ?, ?, ?, ?)").run(
+      orderId,
+      user.id,
+      message || "Uploaded delivery proof.",
+      messageType === "proof" ? "proof" : "message",
+      attachmentUrl,
+    );
     sendJson(res, 201, { messages: getOrderMessages(orderId) });
     return;
   }
@@ -580,16 +654,25 @@ async function routeApi(req, res, requestUrl, method) {
     const body = await readJson(req);
     const reason = cleanText(body.reason || "Buyer reported an issue.", 500);
     const disputeId = `internal_${orderId}`;
+    const evidenceDueAt = internalEvidenceDueAt(orderId);
     db.prepare(
       `INSERT INTO disputes
-        (order_id, provider, provider_dispute_id, charge_id, amount_cents, status, reason, raw_payload)
-       VALUES (?, 'internal', ?, '', ?, 'needs_review', ?, ?)
+        (order_id, provider, provider_dispute_id, charge_id, amount_cents, status, reason, evidence_due_at, raw_payload)
+       VALUES (?, 'internal', ?, '', ?, 'needs_review', ?, ?, ?)
        ON CONFLICT(provider_dispute_id) DO UPDATE SET
          status = 'needs_review',
          reason = excluded.reason,
+         evidence_due_at = excluded.evidence_due_at,
          raw_payload = excluded.raw_payload,
          updated_at = CURRENT_TIMESTAMP`,
-    ).run(orderId, disputeId, Math.round(Number(order.orderTotal || order.total || 0) * 100), reason, JSON.stringify({ user_id: user.id, reason }));
+    ).run(
+      orderId,
+      disputeId,
+      Math.round(Number(order.orderTotal || order.total || 0) * 100),
+      reason,
+      evidenceDueAt,
+      JSON.stringify({ user_id: user.id, reason, evidence_due_at: evidenceDueAt }),
+    );
     db.prepare("UPDATE orders SET order_status = 'disputed' WHERE id = ?").run(orderId);
     db.prepare("INSERT INTO order_messages (order_id, user_id, body) VALUES (?, ?, ?)").run(
       orderId,
@@ -855,13 +938,26 @@ async function validateListing(body) {
   const category = cleanText(body.category, 30);
   const description = cleanText(body.description, 600);
   const deliveryMethod = cleanText(body.deliveryMethod, 30);
+  const deliveryWindow = cleanText(body.deliveryWindow || "24 hours", 30);
+  const region = cleanText(body.region || "Global", 30);
+  const platform = cleanText(body.platform || "All platforms", 40);
+  const stock = Math.round(Number(body.stock || 1));
+  const warrantyDays = Math.round(Number(body.warrantyDays || 0));
   const priceCents = Math.round(Number(body.price || 0) * 100);
-  const categories = ["Currency", "Items", "Accounts", "Boosting", "Gift Cards"];
+  const categories = ["Currency", "Items", "Accounts", "Boosting", "Gift Cards", "Top Ups"];
   const deliveries = ["Instant", "Coordinated", "Manual", "Quote"];
+  const deliveryWindows = ["15 min", "1 hour", "6 hours", "12 hours", "24 hours", "2 days", "3 days"];
+  const regions = ["Global", "NA", "EU", "Asia", "Oceania", "LATAM"];
 
   if (!title || !game || !description) return { error: "Title, game, and description are required." };
   if (!categories.includes(category)) return { error: "Choose a valid category." };
   if (!deliveries.includes(deliveryMethod)) return { error: "Choose a valid delivery method." };
+  if (!deliveryWindows.includes(deliveryWindow)) return { error: "Choose a valid delivery time." };
+  if (!regions.includes(region)) return { error: "Choose a valid region." };
+  if (!Number.isFinite(stock) || stock < 1 || stock > 999) return { error: "Stock must be between 1 and 999." };
+  if (!Number.isFinite(warrantyDays) || warrantyDays < 0 || warrantyDays > 30) {
+    return { error: "Warranty days must be between 0 and 30." };
+  }
   if (!Number.isFinite(priceCents) || priceCents < 0 || priceCents > 10000000) {
     return { error: "Use a valid price." };
   }
@@ -884,7 +980,20 @@ async function validateListing(body) {
   }
 
   if (!imageUrl) imageUrl = makeSvgDataUrl(title, game);
-  return { title, game, category, description, deliveryMethod, priceCents, imageUrl };
+  return {
+    title,
+    game,
+    category,
+    description,
+    deliveryMethod,
+    deliveryWindow,
+    stock,
+    region,
+    platform,
+    warrantyDays,
+    priceCents,
+    imageUrl,
+  };
 }
 
 async function saveDataUrl(dataUrl) {
@@ -1073,12 +1182,27 @@ function formatListing(row) {
     description: row.description,
     price: centsToDollars(row.price_cents),
     deliveryMethod: row.delivery_method,
+    deliveryWindow: row.delivery_window || "24 hours",
+    stock: Number(row.stock || 1),
+    region: row.region || "Global",
+    platform: row.platform || "All platforms",
+    warrantyDays: Number(row.warranty_days || 0),
+    soldCount: Number(row.sold_count ?? listingSoldCount(row.id)),
+    favoriteCount: Number(row.favorite_count ?? listingFavoriteCount(row.id)),
     imageUrl: row.image_url,
     status: row.status,
     moderationNote: row.moderation_note,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+function listingSoldCount(listingId) {
+  return db.prepare("SELECT COUNT(*) AS count FROM order_items WHERE listing_id = ?").get(listingId).count;
+}
+
+function listingFavoriteCount(listingId) {
+  return db.prepare("SELECT COUNT(*) AS count FROM favorites WHERE listing_id = ?").get(listingId).count;
 }
 
 function getSellerProfile(sellerId) {
@@ -1202,8 +1326,24 @@ function getOrderMessages(orderId) {
       username: row.username,
       role: row.role,
       body: row.body,
+      messageType: row.message_type || "message",
+      attachmentUrl: row.attachment_url || "",
       createdAt: row.created_at,
     }));
+}
+
+function internalEvidenceDueAt(orderId) {
+  const rows = db
+    .prepare(
+      `SELECT listings.category
+       FROM order_items
+       JOIN listings ON listings.id = order_items.listing_id
+       WHERE order_items.order_id = ?`,
+    )
+    .all(orderId);
+  const quickProof = rows.some((row) => ["Currency", "Items", "Gift Cards", "Top Ups"].includes(row.category));
+  const hours = quickProof ? 2 : 12;
+  return new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
 }
 
 function ratingTargetForOrder(orderId, user, requestedTargetId) {
