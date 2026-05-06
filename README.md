@@ -78,3 +78,8 @@ Implemented Stripe pieces:
 - Admin dispute display
 
 Real deployment still needs your own Stripe account, live keys, HTTPS hosting, business verification, tax/legal review, and a clear refund/dispute policy.
+
+## Deploy
+
+This app needs a Node host because it has accounts, uploads, checkout, and server APIs.
+GitHub Pages only hosts static files, so use the Render setup in [DEPLOY.md](DEPLOY.md).

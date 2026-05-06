@@ -8,6 +8,6 @@
     "check": "node --check server.js && node -e \"const fs=require('fs');const h=fs.readFileSync('index.html','utf8');const s=[...h.matchAll(/<script>([\\\\s\\\\S]*?)<\\\\/script>/g)].map(m=>m[1]).join('\\\\n');new Function(s);console.log('inline script ok')\""
   },
   "engines": {
-    "node": ">=24"
+    "node": ">=24.14.0 <25.0.0"
   }
 }
