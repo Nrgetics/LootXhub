@@ -33,17 +33,23 @@ Change this before any real deployment.
 - Delivery windows, region/platform fields, stock count, and warranty notes
 - Buyer watchlist/favorites
 - Listing detail pages and seller profile pages
-- Seller wallet snapshot for pending, held, and completed sales
+- Category routes for currency, accounts, items, boosting, gift cards, and top ups
+- Seller wallet snapshot for pending, held, completed sales, and platform fees
+- Seller tiering based on completed orders, ratings, and active listings
+- Seller Stripe Connect onboarding status
+- Account notification center
+- Password change and local prototype reset-token flows
 - Buyer/seller order chat with proof image uploads
 - Order completion ratings
 - Internal buyer-protection holds that create dispute records and evidence deadlines
 - Admin listing management and rejection tools
+- Admin dispute resolution actions for refunding buyers, releasing sellers, or cancelling orders
 - Cart and checkout order creation
-- Demo/manual payment states and payment event records
+- Demo/manual payment states, platform fee records, and payment event records
 
 ## Payment Note
 
-The checkout flow supports demo/manual orders and Stripe Checkout.
+The checkout flow supports demo/manual orders, Stripe Checkout, and Stripe Connect destination transfers for single-seller orders when the seller has completed onboarding.
 
 ## Stripe Setup
 
@@ -53,6 +59,7 @@ Copy `.env.example` to your local environment and set:
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 APP_URL=http://127.0.0.1:5173
+PLATFORM_FEE_PERCENT=8
 ```
 
 For local webhooks, use Stripe CLI:
@@ -76,8 +83,12 @@ Implemented Stripe pieces:
 - `charge.refunded`
 - `refund.created` / `refund.updated`
 - `charge.dispute.*` records
+- Stripe Connect Express account creation
+- Stripe Connect account links and payout readiness tracking
+- Destination transfers for eligible single-seller Checkout orders
+- Platform commission tracking through orders, items, and seller wallet totals
 - Admin refund action
-- Admin dispute display
+- Admin dispute display and resolution
 
 Real deployment still needs your own Stripe account, live keys, HTTPS hosting, business verification, tax/legal review, and a clear refund/dispute policy.
 

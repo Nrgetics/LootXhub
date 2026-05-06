@@ -1552,6 +1552,11 @@
         justify-content: flex-start;
       }
 
+      .order-card.unread {
+        border-color: rgba(255, 208, 90, 0.52);
+        background: #20242f;
+      }
+
       .detail-page,
       .seller-profile-page {
         display: grid;
@@ -1614,11 +1619,14 @@
         color: #ffd05a;
       }
 
-        .seller-stat-grid,
-        .wallet-grid,
-        .trust-grid,
-        .order-tools-grid {
+      .seller-stat-grid,
+      .trust-grid,
+      .order-tools-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .wallet-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
       }
 
       .seller-stat,
@@ -1870,11 +1878,11 @@
       </div>
 
       <nav class="top-nav" aria-label="Marketplace shortcuts">
-        <a href="#market" data-nav-page="market" data-category="Currency">Currency</a>
-        <a href="#market" data-nav-page="market" data-category="Accounts">Accounts</a>
-        <a href="#market" data-nav-page="market" data-category="Items">Items</a>
-        <a href="#market" data-nav-page="market" data-category="Boosting">Boosting</a>
-        <a href="#market" data-nav-page="market" data-category="Top Ups">Top Ups</a>
+        <a href="#currency" data-nav-page="market" data-category="Currency">Currency</a>
+        <a href="#accounts" data-nav-page="market" data-category="Accounts">Accounts</a>
+        <a href="#items" data-nav-page="market" data-category="Items">Items</a>
+        <a href="#boosting" data-nav-page="market" data-category="Boosting">Boosting</a>
+        <a href="#top-ups" data-nav-page="market" data-category="Top Ups">Top Ups</a>
         <a href="#sell" data-nav-page="sell">Start selling</a>
         <a href="#account" data-nav-page="account">Orders</a>
         <a href="#admin" id="adminShortcut" class="hidden" data-nav-page="admin">Admin</a>
@@ -2045,6 +2053,52 @@
           <div>
             <p class="eyebrow">Seller wallet</p>
             <div class="wallet-grid" id="walletGrid"></div>
+          </div>
+          <div class="account-order-grid">
+            <article class="account-order-column">
+              <div class="mini-head">
+                <div>
+                  <p class="eyebrow">Seller payouts</p>
+                  <h3>Stripe Connect</h3>
+                </div>
+                <span class="tag pending" id="connectBadge">Not started</span>
+              </div>
+              <p class="help-text" id="connectText">Connect Stripe to unlock real seller payouts.</p>
+              <button class="secondary-button" id="connectStripeButton" type="button">Start payout setup</button>
+            </article>
+            <article class="account-order-column">
+              <div class="mini-head">
+                <div>
+                  <p class="eyebrow">Security</p>
+                  <h3>Password tools</h3>
+                </div>
+              </div>
+              <form class="auth-form" id="changePasswordForm">
+                <input id="currentPassword" type="password" placeholder="Current password" autocomplete="current-password" />
+                <input id="newPassword" type="password" placeholder="New password" autocomplete="new-password" />
+                <button class="secondary-button" type="submit">Change password</button>
+              </form>
+              <form class="auth-form" id="resetPasswordForm">
+                <input id="resetEmail" type="email" placeholder="Reset email" />
+                <button class="ghost-button" type="submit">Create reset token</button>
+              </form>
+              <form class="auth-form" id="confirmResetForm">
+                <input id="resetToken" placeholder="Reset token" autocomplete="one-time-code" />
+                <input id="resetNewPassword" type="password" placeholder="New password" autocomplete="new-password" />
+                <button class="ghost-button" type="submit">Use reset token</button>
+              </form>
+              <p class="help-text" id="resetTokenOutput"></p>
+            </article>
+          </div>
+          <div>
+            <div class="mini-head">
+              <div>
+                <p class="eyebrow">Notifications</p>
+                <h3>Activity center</h3>
+              </div>
+              <button class="secondary-button" id="markNotificationsRead" type="button">Mark read</button>
+            </div>
+            <div class="order-list-mini" id="notificationList"></div>
           </div>
           <div>
             <p class="eyebrow">Watchlist</p>
@@ -2391,6 +2445,10 @@
                 <strong>Included</strong>
               </div>
               <div class="price-row">
+                <span>Marketplace fee</span>
+                <strong id="checkoutMarketplaceFee">$0.00 included</strong>
+              </div>
+              <div class="price-row">
                 <span>Discount</span>
                 <strong id="checkoutDiscount">$0.00</strong>
               </div>
@@ -2548,6 +2606,8 @@
         myOrders: [],
         sellerOrders: [],
         wallet: null,
+        notifications: [],
+        connect: null,
         favoriteIds: [],
         favoriteListings: [],
         activeOrder: null,
@@ -2558,7 +2618,7 @@
         adminListings: [],
         adminOrders: [],
         adminDisputes: [],
-        config: { stripeConfigured: false, stripeWebhookConfigured: false, stripeCurrency: "usd" },
+        config: { stripeConfigured: false, stripeWebhookConfigured: false, stripeCurrency: "usd", platformFeePercent: 8 },
         cart: [],
         selectedId: null,
         query: "",
@@ -2575,6 +2635,8 @@
         Number(value) === 0
           ? "Quote"
           : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(value));
+      const currency = (value) =>
+        new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(value || 0));
       const escapeHTML = (value) =>
         String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[char]);
 
@@ -2666,7 +2728,7 @@
         $("#accountText").textContent = "You can buy, create listings, and track your own seller dashboard.";
         $("#profileName").textContent = state.user.username;
         $("#profileEmail").textContent = state.user.email;
-        $("#profileRole").textContent = state.user.role;
+        $("#profileRole").textContent = state.user.sellerTier || state.user.role;
       }
 
       function orderItemsMarkup(order) {
@@ -2700,24 +2762,53 @@
       function renderAccountOrders() {
         $("#myOrderCount").textContent = state.myOrders.length;
         $("#sellerOrderCount").textContent = state.sellerOrders.length;
-        const wallet = state.wallet || { pending: 0, available: 0, held: 0, grossSales: 0, completedOrders: 0, pendingOrders: 0 };
+        const wallet = state.wallet || { pending: 0, available: 0, held: 0, grossSales: 0, platformFees: 0, completedOrders: 0, pendingOrders: 0 };
         $("#walletGrid").innerHTML = `
           <article class="wallet-card">
             <small>Available</small>
-            <strong>${money(wallet.available)}</strong>
+            <strong>${currency(wallet.available)}</strong>
             <span class="muted">Completed orders</span>
           </article>
           <article class="wallet-card">
             <small>Pending</small>
-            <strong>${money(wallet.pending)}</strong>
+            <strong>${currency(wallet.pending)}</strong>
             <span class="muted">${wallet.pendingOrders || 0} order(s)</span>
           </article>
           <article class="wallet-card">
             <small>Held</small>
-            <strong>${money(wallet.held)}</strong>
+            <strong>${currency(wallet.held)}</strong>
             <span class="muted">Disputes and manual review</span>
           </article>
+          <article class="wallet-card">
+            <small>Platform fees</small>
+            <strong>${currency(wallet.platformFees || 0)}</strong>
+            <span class="muted">${state.config.platformFeePercent || 0}% commission tracked</span>
+          </article>
         `;
+        const connect = state.connect || state.user?.connect || { onboardingStatus: "not_started", payoutReady: false };
+        $("#connectBadge").textContent = connect.payoutReady ? "Payout ready" : connect.onboardingStatus === "started" ? "In progress" : "Not ready";
+        $("#connectBadge").className = `tag ${connect.payoutReady ? "approved" : "pending"}`;
+        $("#connectText").textContent = connect.payoutReady
+          ? "Stripe payouts are enabled for this seller account."
+          : state.config.stripeConfigured
+            ? "Finish Stripe onboarding so card payments can route seller funds."
+            : "Add Stripe keys before real seller onboarding can start.";
+        $("#connectStripeButton").disabled = !state.config.stripeConfigured;
+
+        $("#notificationList").innerHTML =
+          (state.notifications || [])
+            .map(
+              (note) => `
+                <div class="order-card ${note.readAt ? "" : "unread"}">
+                  <div class="status-line">
+                    <span class="tag fast">${escapeHTML(note.type)}</span>
+                    <strong>${escapeHTML(note.title)}</strong>
+                  </div>
+                  <span class="muted">${escapeHTML(note.body)} | ${escapeHTML(note.createdAt)}</span>
+                </div>
+              `,
+            )
+            .join("") || `<p class="help-text">No notifications yet.</p>`;
         $("#favoriteListings").innerHTML =
           (state.favoriteListings || [])
             .map(
@@ -3077,10 +3168,12 @@
 
       function renderCart() {
         const total = state.cart.reduce((sum, item) => sum + Number(item.price), 0);
+        const marketplaceFee = total * (Number(state.config.platformFeePercent || 0) / 100);
         const count = state.cart.length;
         $("#orderTotal").textContent = money(total);
         $("#checkoutSubtotal").textContent = money(total);
-        $("#checkoutDiscount").textContent = money(0);
+        $("#checkoutMarketplaceFee").textContent = `${currency(marketplaceFee)} included`;
+        $("#checkoutDiscount").textContent = currency(0);
         $("#checkoutCount").textContent = `${count} item${count === 1 ? "" : "s"}`;
         $("#metricTotal").textContent = money(total);
         $("#metricItems").textContent = `${count} selected`;
@@ -3171,6 +3264,13 @@
                 <div class="admin-item">
                   <strong>${escapeHTML(dispute.providerDisputeId)} | ${money(dispute.amount)} | ${escapeHTML(dispute.status)}</strong>
                   <span class="muted">Order #${dispute.orderId || "unknown"} | ${escapeHTML(dispute.reason || "no reason")} | due ${escapeHTML(dispute.evidenceDueAt || "n/a")}</span>
+                  ${dispute.resolvedAt
+                    ? `<span class="muted">${escapeHTML(dispute.resolution || "Resolved")} | ${escapeHTML(dispute.resolvedAt)}</span>`
+                    : `<div class="admin-actions">
+                        <button class="primary-button" type="button" data-resolve-dispute="${dispute.id}" data-outcome="buyer">Refund buyer</button>
+                        <button class="secondary-button" type="button" data-resolve-dispute="${dispute.id}" data-outcome="seller">Release seller</button>
+                        <button class="danger-button" type="button" data-resolve-dispute="${dispute.id}" data-outcome="cancel">Cancel order</button>
+                      </div>`}
                 </div>
               `,
             )
@@ -3225,8 +3325,26 @@
         order: "order",
       };
 
+      const categoryRoutes = {
+        currency: "Currency",
+        accounts: "Accounts",
+        items: "Items",
+        boosting: "Boosting",
+        "gift-cards": "Gift Cards",
+        "top-ups": "Top Ups",
+      };
+
+      function routeForCategory(category) {
+        const match = Object.entries(categoryRoutes).find(([, label]) => label === category);
+        return match ? `#${match[0]}` : "#market";
+      }
+
       function currentPageName() {
         const raw = location.hash.replace("#", "").trim();
+        if (categoryRoutes[raw]) {
+          state.category = categoryRoutes[raw];
+          return "market";
+        }
         return pageAliases[raw] || "home";
       }
 
@@ -3341,12 +3459,14 @@
           state.listings = listingData.listings;
           state.selectedId ||= state.listings[0]?.id || null;
           if (state.user) {
-            const [myListingsData, myOrdersData, sellerOrdersData, walletData, favoriteData] = await Promise.all([
+            const [myListingsData, myOrdersData, sellerOrdersData, walletData, favoriteData, notificationData, connectData] = await Promise.all([
               api("/api/my/listings"),
               api("/api/my/orders"),
               api("/api/my/sales"),
               api("/api/my/wallet"),
               api("/api/my/favorites"),
+              api("/api/my/notifications"),
+              api("/api/connect/status"),
             ]);
             state.myListings = myListingsData.listings;
             state.myOrders = myOrdersData.orders.filter(Boolean);
@@ -3354,6 +3474,8 @@
             state.wallet = walletData.wallet;
             state.favoriteIds = favoriteData.listingIds || [];
             state.favoriteListings = favoriteData.listings || [];
+            state.notifications = notificationData.notifications || [];
+            state.connect = connectData.connect || null;
           } else {
             state.myListings = [];
             state.myOrders = [];
@@ -3361,6 +3483,8 @@
             state.wallet = null;
             state.favoriteIds = [];
             state.favoriteListings = [];
+            state.notifications = [];
+            state.connect = null;
           }
           if (state.user?.role === "admin") {
             state.adminListings = (await api("/api/admin/listings")).listings;
@@ -3443,7 +3567,7 @@
           $("#globalSearchCategory").value = state.category;
           render();
           if (button.closest("#categories") || button.closest(".top-nav")) {
-            location.hash = "#market";
+            location.hash = routeForCategory(state.category);
           }
         });
       });
@@ -3782,6 +3906,8 @@
         state.myOrders = [];
         state.sellerOrders = [];
         state.wallet = null;
+        state.notifications = [];
+        state.connect = null;
         state.favoriteIds = [];
         state.favoriteListings = [];
         state.activeOrder = null;
@@ -3792,6 +3918,78 @@
         state.adminDisputes = [];
         render();
         toast("Signed out.");
+      });
+
+      $("#connectStripeButton").addEventListener("click", async () => {
+        if (!requireAccount()) return;
+        try {
+          const data = await api("/api/connect/onboard", { method: "POST", body: "{}" });
+          if (data.url) {
+            location.href = data.url;
+            return;
+          }
+          state.connect = data.connect || state.connect;
+          render();
+          toast("Payout setup started.");
+        } catch (error) {
+          toast(error.message);
+        }
+      });
+
+      $("#markNotificationsRead").addEventListener("click", async () => {
+        if (!requireAccount()) return;
+        try {
+          await api("/api/my/notifications/read-all", { method: "POST", body: "{}" });
+          await loadAll();
+          toast("Notifications marked read.");
+        } catch (error) {
+          toast(error.message);
+        }
+      });
+
+      $("#changePasswordForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (!requireAccount()) return;
+        try {
+          await api("/api/auth/change-password", {
+            method: "POST",
+            body: JSON.stringify({ currentPassword: $("#currentPassword").value, newPassword: $("#newPassword").value }),
+          });
+          event.target.reset();
+          await loadAll();
+          toast("Password updated.");
+        } catch (error) {
+          toast(error.message);
+        }
+      });
+
+      $("#resetPasswordForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        try {
+          const data = await api("/api/auth/password-reset/request", {
+            method: "POST",
+            body: JSON.stringify({ email: $("#resetEmail").value }),
+          });
+          $("#resetTokenOutput").textContent = data.devResetToken ? `Dev reset token: ${data.devResetToken}` : data.message;
+          toast("Reset request created.");
+        } catch (error) {
+          toast(error.message);
+        }
+      });
+
+      $("#confirmResetForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        try {
+          await api("/api/auth/password-reset/confirm", {
+            method: "POST",
+            body: JSON.stringify({ token: $("#resetToken").value, newPassword: $("#resetNewPassword").value }),
+          });
+          event.target.reset();
+          $("#resetTokenOutput").textContent = "Password reset complete.";
+          toast("Password reset complete.");
+        } catch (error) {
+          toast(error.message);
+        }
       });
 
       $("#listingForm").addEventListener("submit", async (event) => {
@@ -3855,6 +4053,21 @@
           });
           await loadAll();
           toast(`Refund recorded: ${money(result.refund.amount)}`);
+        } catch (error) {
+          toast(error.message);
+        }
+      });
+
+      $("#adminDisputes").addEventListener("click", async (event) => {
+        const action = event.target.closest("[data-resolve-dispute]");
+        if (!action) return;
+        try {
+          await api(`/api/admin/disputes/${action.dataset.resolveDispute}/resolve`, {
+            method: "POST",
+            body: JSON.stringify({ outcome: action.dataset.outcome, note: "Resolved from the admin console." }),
+          });
+          await loadAll();
+          toast("Dispute resolution saved.");
         } catch (error) {
           toast(error.message);
         }
